@@ -40,7 +40,7 @@ function buildWordTable(scope) {
 const stories = (window.RUOGU_STORIES) || [];
 const readingTexts = (window.RUOGU_READING_TEXTS) || { recite: [], jokes: [], poems: [] };
 const weapons = window.RUOGU_WEAPONS;
-const storeKey = "ruogu-literacy-state-v4"; // v4：词级统计（旧 v3 为字级，不兼容）
+const storeKey = "ruogu-literacy-state-v5"; // v5：v4 词级统计 + 若谷已解锁芭蕉扇（280星）
 
 // 库内字集：全册会认+会写词拆出的所有单字（与出题范围无关），用于阅读关判断新字
 const LIB_CHARS = (function () {
@@ -92,6 +92,15 @@ function loadState() {
       // known 不迁移：旧的是「字」级、新的是「词」级，统计口径不同
     }
   } catch {}
+  // v4→v5：若谷已解锁至芭蕉扇，保留旧星数，0星则注入280
+  try {
+    const old = JSON.parse(localStorage.getItem("ruogu-literacy-state-v4"));
+    if (old && typeof old.totalStars === "number") {
+      fresh.totalStars = Math.max(old.totalStars, 280);
+    }
+  } catch {}
+  // 全新设备/无任何旧状态：至少给若谷保留已解锁的芭蕉扇进度
+  if (fresh.totalStars < 280) fresh.totalStars = 280;
   return fresh;
 }
 
