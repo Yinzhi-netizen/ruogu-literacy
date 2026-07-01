@@ -402,8 +402,9 @@ function renderDictation() {
       <button class="target listen-target" data-action="speak">🔊 听词语</button>
       <canvas class="handwrite-pad${multiClass}" ${ratioStyle} width="${padW}" height="${padH}" data-cells="${n}" aria-label="手写区域"></canvas>
       <div class="ocr-status" hidden></div>
-      <div class="actions two-actions">
+      <div class="actions three-actions">
         <button class="soft-button" data-action="clear">擦掉重写</button>
+        <button class="soft-button" data-action="peekAnswer">👀 看答案</button>
         <button class="primary-button" data-action="submitOcr">提交识别</button>
       </div>
       <div class="ocr-settings" hidden>
@@ -509,6 +510,26 @@ function setupHandwritingPad(word) {
   const playPrompt = () => speak(`${word.word}。${word.word}。`);
   stage.querySelector("[data-action='speak']").addEventListener("click", playPrompt);
   stage.querySelector("[data-action='clear']").addEventListener("click", clearPad);
+
+  // 看答案：不给星，只显示正确答案 + 拼音
+  let peeked = false;
+  stage.querySelector("[data-action='peekAnswer']").addEventListener("click", () => {
+    peeked = true;
+    ocrStatus.hidden = false;
+    ocrStatus.className = "ocr-status ocr-warn";
+    ocrStatus.innerHTML = `
+      <div class="fallback-check">
+        <p>正确答案：<strong style="font-size:28px;">${word.word}</strong> <span class="py">（${word.pinyin}）</span></p>
+        <p class="hit-hint">看过答案就换一个吧，这一次不算得星哦。</p>
+        <div class="actions two-actions">
+          <button class="primary-button" data-action="peekNext">换一个词</button>
+        </div>
+      </div>
+    `;
+    stage.querySelector("[data-action='peekNext']").addEventListener("click", () => {
+      pickDictWord();
+    });
+  });
 
   // OCR settings toggle
   stage.querySelector("[data-action='toggleOcrSettings']").addEventListener("click", () => {
@@ -629,9 +650,9 @@ function handleRecognitionResult(recognizedText, word, canvas) {
   // 整词校验：识别文本完整包含该词 → 完全正确
   const exact = cleaned.includes(target);
   // 多字词容错：该词的每个字都在识别结果里（顺序可乱，OCR 手写易错位）
-  const allChars = [...target].every((c) => cleaned.includes(c));
+  const allChars = target.length > 1 && [...target].every((c) => cleaned.includes(c));
 
-  if (exact || (target.length > 1 && allChars)) {
+  if (exact || allChars) {
     ocrStatus.className = "ocr-status ocr-ok";
     ocrStatus.innerHTML = `识别成功：${cleaned} ✓`;
     markKnown(word.word);
@@ -639,16 +660,16 @@ function handleRecognitionResult(recognizedText, word, canvas) {
     pickDictWord();
     awardStars(3, "听写成功");
   } else {
-    // 部分命中：给人工确认入口（OCR 对手写多字词常不准）
-    const hitCount = [...new Set(target)].filter((c) => cleaned.includes(c)).length;
+    // 没写对（或没写）：只能再写一次或看答案，不再有"我写对了"
+    const hitCount = cleaned ? [...new Set(target)].filter((c) => cleaned.includes(c)).length : 0;
     ocrStatus.className = "ocr-status ocr-warn";
     ocrStatus.innerHTML = `
       <div class="fallback-check">
-        <p>识别结果：<strong>${cleaned || "无"}</strong>（要写的是「${target}」）</p>
-        <p class="hit-hint">${hitCount > 0 ? `认出了 ${hitCount}/${target.length} 个字。` : ""}手写的字 OCR 有时认不准，你自己看写对了吗？</p>
+        <p>识别结果：<strong>${cleaned || "（空白）"}</strong>，要写的是「${target}」</p>
+        <p class="hit-hint">${cleaned ? (hitCount > 0 ? `认出了 ${hitCount}/${target.length} 个字，再仔细写一次试试。` : "写得不太清楚，再写一次试试。") : "还没写呢，先在方框里写一下。"}</p>
         <div class="actions two-actions">
           <button class="soft-button" data-action="retryManual">再写一次</button>
-          <button class="primary-button" data-action="confirmManual">我写对了 ✓</button>
+          <button class="soft-button" data-action="peekAnswerInline">👀 看答案</button>
         </div>
       </div>
     `;
@@ -656,29 +677,58 @@ function handleRecognitionResult(recognizedText, word, canvas) {
       const canvasEl = stage.querySelector(".handwrite-pad");
       const ctx = canvasEl.getContext("2d");
       ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
+      // 重画田字格
+      const cells = parseInt(canvasEl.dataset.cells || "1", 10);
+      const cw = canvasEl.width / cells;
+      const h = canvasEl.height;
+      ctx.save();
+      ctx.strokeStyle = "rgba(143, 29, 29, 0.22)";
+      ctx.lineWidth = 2;
+      for (let i = 0; i < cells; i++) {
+        const x0 = i * cw;
+        ctx.strokeRect(x0 + 3, 3, cw - 6, h - 6);
+        ctx.save();
+        ctx.setLineDash([10, 10]);
+        ctx.beginPath();
+        ctx.moveTo(x0 + cw / 2, 4); ctx.lineTo(x0 + cw / 2, h - 4);
+        ctx.moveTo(x0 + 4, h / 2); ctx.lineTo(x0 + cw - 4, h / 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+      ctx.restore();
+      ctx.lineWidth = 26;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.strokeStyle = "#111111";
       ocrStatus.hidden = true;
     });
-    stage.querySelector("[data-action='confirmManual']").addEventListener("click", () => {
-      markKnown(word.word);
-      markKnown(word.word);
-      pickDictWord();
-      awardStars(3, "听写成功");
+    stage.querySelector("[data-action='peekAnswerInline']").addEventListener("click", () => {
+      ocrStatus.innerHTML = `
+        <div class="fallback-check">
+          <p>正确答案：<strong style="font-size:28px;">${word.word}</strong> <span class="py">（${word.pinyin}）</span></p>
+          <p class="hit-hint">看过答案就换一个吧，这一次不算得星哦。</p>
+          <div class="actions two-actions">
+            <button class="primary-button" data-action="peekNextInline">换一个词</button>
+          </div>
+        </div>
+      `;
+      stage.querySelector("[data-action='peekNextInline']").addEventListener("click", () => {
+        pickDictWord();
+      });
     });
   }
 }
 
 function fallbackManualCheck(word, canvas) {
+  // 网络失败：也不再给"写对了"按钮，只能重试或看答案
   const ocrStatus = stage.querySelector(".ocr-status");
-  const imageUrl = canvas.toDataURL("image/png");
   ocrStatus.className = "ocr-status ocr-warn";
   ocrStatus.innerHTML = `
     <div class="fallback-check">
-      <p>联网识别失败，请手动比对：</p>
-      <img src="${imageUrl}" alt="手写内容" class="handwrite-preview" />
-      <p class="fallback-answer">答案：<strong>${word.word}</strong><span class="py">（${word.pinyin}）</span></p>
+      <p>联网识别失败了，请检查网络后重试。</p>
       <div class="actions two-actions">
         <button class="soft-button" data-action="retryManual">再写一次</button>
-        <button class="primary-button" data-action="confirmManual">写对了</button>
+        <button class="soft-button" data-action="peekAnswerInline">👀 看答案</button>
       </div>
     </div>
   `;
@@ -690,11 +740,19 @@ function fallbackManualCheck(word, canvas) {
     ocrStatus.hidden = true;
   });
 
-  stage.querySelector("[data-action='confirmManual']").addEventListener("click", () => {
-    markKnown(word.word);
-    markKnown(word.word);
-    pickDictWord();
-    awardStars(3, "听写成功");
+  stage.querySelector("[data-action='peekAnswerInline']").addEventListener("click", () => {
+    ocrStatus.innerHTML = `
+      <div class="fallback-check">
+        <p>正确答案：<strong style="font-size:28px;">${word.word}</strong> <span class="py">（${word.pinyin}）</span></p>
+        <p class="hit-hint">看过答案就换一个吧，这一次不算得星哦。</p>
+        <div class="actions two-actions">
+          <button class="primary-button" data-action="peekNextInline">换一个词</button>
+        </div>
+      </div>
+    `;
+    stage.querySelector("[data-action='peekNextInline']").addEventListener("click", () => {
+      pickDictWord();
+    });
   });
 }
 
