@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>若谷一年级识字库 · 总览</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <style>
+      .lib-shell {
+        width: min(1000px, 100%);
+        margin: 0 auto;
+        padding: 20px 18px 60px;
+        position: relative;
+        z-index: 1;
+      }
+      .lib-head {
+        text-align: center;
+        margin-bottom: 18px;
+      }
+      .lib-head h1 {
+        font-family: var(--font-heading);
+        color: var(--accent);
+      }
+      .lib-head p {
+        color: var(--muted);
+        font-weight: 800;
+        margin: 6px 0 0;
+      }
+      .vol-tabs {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        margin: 18px 0;
+      }
+      .vol-tab {
+        padding: 10px 24px;
+        border-radius: 999px;
+        border: 2px solid var(--border-accent);
+        background: rgba(255, 255, 255, 0.7);
+        font-family: var(--font-heading);
+        font-size: 18px;
+        font-weight: 900;
+        color: var(--ink);
+        transition: all 0.2s ease;
+      }
+      .vol-tab.active {
+        background: linear-gradient(135deg, var(--accent), #6b1010);
+        color: #fff;
+        box-shadow: 0 4px 12px var(--glow-red);
+      }
+      .vol-stats {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+      }
+      .vol-stats .pill {
+        padding: 8px 16px;
+        border-radius: 999px;
+        background: var(--panel);
+        border: 2px solid var(--border-card);
+        font-weight: 900;
+        box-shadow: var(--elevation-1);
+      }
+      .vol-stats .pill b {
+        color: var(--accent);
+        font-family: var(--font-display);
+        font-size: 22px;
+      }
+      .lesson-card {
+        background: var(--panel);
+        border: 2px solid var(--border-card);
+        border-radius: 12px;
+        box-shadow: var(--elevation-2);
+        padding: 16px 18px;
+        margin-bottom: 14px;
+      }
+      .lesson-card h3 {
+        margin: 0 0 12px;
+        font-family: var(--font-heading);
+        font-size: 22px;
+        color: var(--accent);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .lesson-card h3 .idx {
+        font-size: 14px;
+        color: #fff;
+        background: var(--accent-2);
+        border-radius: 6px;
+        padding: 2px 8px;
+        font-family: var(--font-body);
+      }
+      .char-row {
+        margin: 8px 0;
+      }
+      .char-row .label {
+        font-size: 14px;
+        font-weight: 900;
+        color: var(--muted);
+        margin-bottom: 6px;
+      }
+      .char-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .ch {
+        width: 44px;
+        height: 44px;
+        display: grid;
+        place-items: center;
+        border-radius: 8px;
+        font-family: var(--font-display);
+        font-size: 26px;
+        font-weight: 900;
+        background: #fff;
+        border: 1px solid var(--border-card);
+        color: var(--ink);
+      }
+      .ch.write {
+        background: linear-gradient(180deg, #fff3bf, #f8edcf);
+        border: 2px solid var(--accent-2);
+        color: var(--accent);
+        box-shadow: 0 0 6px var(--glow-gold);
+      }
+      .ch.empty {
+        color: #bbb;
+        font-size: 13px;
+      }
+      .legend {
+        display: flex;
+        gap: 16px;
+        justify-content: center;
+        margin-bottom: 16px;
+        font-size: 14px;
+        font-weight: 800;
+        color: var(--muted);
+      }
+      .legend span {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .legend .swatch {
+        width: 18px;
+        height: 18px;
+        border-radius: 5px;
+        display: inline-block;
+      }
+      .recite-section {
+        margin-top: 28px;
+      }
+      .recite-section > h2 {
+        font-family: var(--font-heading);
+        color: var(--accent);
+        text-align: center;
+      }
+      .recite-card {
+        background: color-mix(in srgb, var(--accent-3) 16%, white);
+        border: 2px solid color-mix(in srgb, var(--accent-2) 22%, transparent);
+        border-radius: 12px;
+        padding: 14px 18px;
+        margin-bottom: 12px;
+      }
+      .recite-card .rt-title {
+        font-family: var(--font-heading);
+        font-size: 20px;
+        font-weight: 900;
+        color: var(--accent);
+      }
+      .recite-card .rt-author {
+        font-size: 13px;
+        color: var(--muted);
+        font-weight: 800;
+        margin-left: 8px;
+      }
+      .recite-card .rt-text {
+        margin-top: 8px;
+        font-family: var(--font-display);
+        font-size: 22px;
+        line-height: 1.7;
+        color: var(--ink);
+      }
+      .jjy-list {
+        display: grid;
+        gap: 8px;
+      }
+      .jjy-list div {
+        font-family: var(--font-display);
+        font-size: 20px;
+        background: rgba(255, 255, 255, 0.7);
+        border-radius: 8px;
+        padding: 8px 14px;
+        border: 1px solid var(--border-card);
+      }
+      .hidden { display: none; }
+    </style>
+  </head>
+  <body>
+    <main class="lib-shell">
+      <div class="lib-head">
+        <h1>若谷一年级识字库</h1>
+        <p>依据统编版（部编版）一年级上下册标准字表整理 · 供对照课本核对</p>
+      </div>
+
+      <div class="vol-tabs">
+        <button class="vol-tab active" data-vol="上册">上册</button>
+        <button class="vol-tab" data-vol="下册">下册</button>
+      </div>
+
+      <div class="legend">
+        <span><i class="swatch" style="background:#fff;border:1px solid #ccc;"></i> 会认字（看到能读）</span>
+        <span><i class="swatch" style="background:linear-gradient(180deg,#fff3bf,#c9972b);"></i> 会写字（要会写）</span>
+      </div>
+
+      <div id="content"></div>
+    </main>
+
+    <script src="./grade1-library.js"></script>
+    <script>
+      const content = document.querySelector("#content");
+      const tabs = document.querySelectorAll(".vol-tab");
+      let vol = "上册";
+
+      function uniq(list) {
+        return [...new Set(list)];
+      }
+
+      function renderVol(volName) {
+        const data = window.RUOGU_GRADE1[volName];
+        const allRecognize = uniq(data.lessons.flatMap((l) => l.recognize));
+        const allWrite = uniq(data.lessons.flatMap((l) => l.write));
+
+        let html = `
+          <div class="vol-stats">
+            <div class="pill">会认字 <b>${allRecognize.length}</b></div>
+            <div class="pill">会写字 <b>${allWrite.length}</b></div>
+            <div class="pill">课文 <b>${data.lessons.length}</b></div>
+            <div class="pill">背诵篇目 <b>${data.recite.length}</b></div>
+          </div>
+        `;
+
+        data.lessons.forEach((l, i) => {
+          const writeSet = new Set(l.write);
+          // 会认字里把"也是会写"的标出来，其余普通会认；会写字单独再列一行
+          const recognizeChips = l.recognize.length
+            ? l.recognize.map((c) => `<div class="ch ${writeSet.has(c) ? "write" : ""}">${c}</div>`).join("")
+            : `<div class="ch empty">—</div>`;
+          const writeChips = l.write.length
+            ? l.write.map((c) => `<div class="ch write">${c}</div>`).join("")
+            : `<div class="ch empty">无</div>`;
+
+          html += `
+            <div class="lesson-card">
+              <h3><span class="idx">${i + 1}</span>《${l.lesson}》</h3>
+              <div class="char-row">
+                <div class="label">会认字（${l.recognize.length}）</div>
+                <div class="char-grid">${recognizeChips}</div>
+              </div>
+              <div class="char-row">
+                <div class="label">会写字（${l.write.length}）</div>
+                <div class="char-grid">${writeChips}</div>
+              </div>
+            </div>
+          `;
+        });
+
+        // 背诵篇目
+        html += `<div class="recite-section"><h2>背诵篇目</h2>`;
+        data.recite.forEach((r) => {
+          html += `
+            <div class="recite-card">
+              <span class="rt-title">《${r.title}》</span>${r.author ? `<span class="rt-author">${r.author}</span>` : ""}
+              <div class="rt-text">${r.text}</div>
+            </div>
+          `;
+        });
+        html += `</div>`;
+
+        // 日积月累
+        if (data.日积月累 && data.日积月累.length) {
+          html += `<div class="recite-section"><h2>日积月累</h2><div class="jjy-list">`;
+          data.日积月累.forEach((s) => {
+            html += `<div>${s}</div>`;
+          });
+          html += `</div></div>`;
+        }
+
+        content.innerHTML = html;
+      }
+
+      tabs.forEach((tab) => {
+        tab.addEventListener("click", () => {
+          vol = tab.dataset.vol;
+          tabs.forEach((t) => t.classList.toggle("active", t === tab));
+          renderVol(vol);
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        });
+      });
+
+      renderVol(vol);
+    </script>
+  </body>
+</html>

@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>若谷武器图片库</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell library-shell">
+      <section class="topbar">
+        <div>
+          <p class="eyebrow">武器图片库</p>
+          <h1>若谷神兵图鉴</h1>
+        </div>
+      </section>
+      <section class="armory">
+        <div class="rule-box">
+          <strong>第一版图片库</strong>
+          <span>字段：名称、人物、武力值、书名、图片。图片为本地原创 SVG，后面可以切成形象碎片。</span>
+        </div>
+        <div class="library-grid" id="libraryGrid"></div>
+      </section>
+    </main>
+    <script src="./weapon-library.js"></script>
+    <script>
+      const grid = document.querySelector("#libraryGrid");
+      window.RUOGU_WEAPON_LIBRARY.forEach((weapon) => {
+        const card = document.createElement("section");
+        card.className = "library-card";
+        card.innerHTML = `
+          <img src="${weapon.image}" alt="${weapon.name}" />
+          <div>
+            <h2>${weapon.name}</h2>
+            <p>${weapon.book} · ${weapon.hero}</p>
+            <div class="power-line"><span style="width:${weapon.power}%"></span></div>
+            <strong>武力值 ${weapon.power}</strong>
+            <p>${weapon.intro}</p>
+          </div>
+        `;
+        grid.append(card);
+      });
+    </script>
+  </body>
+</html>

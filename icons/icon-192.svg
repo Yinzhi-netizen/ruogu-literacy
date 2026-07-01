@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192">
+  <rect width="192" height="192" rx="34" fill="#f7f6f2"/>
+  <rect x="4" y="4" width="184" height="184" rx="32" fill="none" stroke="#5b7cb5" stroke-width="5"/>
+  <circle cx="52" cy="54" r="18" fill="#d4684c"/>
+  <circle cx="140" cy="54" r="18" fill="#5b7cb5"/>
+  <rect x="36" y="84" width="120" height="70" rx="12" fill="rgba(255,255,255,.85)" stroke="#d8d6ce" stroke-width="2"/>
+  <text x="96" y="137" text-anchor="middle" font-size="58" font-weight="900" font-family="KaiTi,STKaiti,楷体,serif" fill="#22222a">读</text>
+</svg>

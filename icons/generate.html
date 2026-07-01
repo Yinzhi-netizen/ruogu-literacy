@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>Icon Generator</title>
+<style>
+  body { display:grid; place-items:center; min-height:100vh; margin:0; background:#f0eee8; font-family:serif; }
+  .card { text-align:center; padding:40px; }
+  canvas { border-radius:24px; box-shadow:0 8px 32px rgba(0,0,0,.12); margin-bottom:20px; }
+  a { display:inline-block; padding:12px 32px; background:#2c4a7c; color:#fff; text-decoration:none; border-radius:6px; font-weight:bold; margin:6px; }
+  p { color:#666; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h2>右键 / 长按保存图标</h2>
+  <canvas id="c180" width="180" height="180"></canvas>
+  <p>180×180 — iPad 主屏幕</p>
+  <a id="dl180" href="#">下载 180px</a>
+  <br><br>
+  <canvas id="c512" width="512" height="512"></canvas>
+  <p>512×512 — PWA 通用</p>
+  <a id="dl512" href="#">下载 512px</a>
+</div>
+<script>
+function drawIcon(canvas, size) {
+  var ctx = canvas.getContext("2d");
+  var s = size;
+  // bg
+  ctx.fillStyle = "#f7f6f2";
+  ctx.beginPath();
+  ctx.roundRect(0, 0, s, s, s * 0.18);
+  ctx.fill();
+  // border
+  ctx.strokeStyle = "#5b7cb5";
+  ctx.lineWidth = s * 0.04;
+  ctx.beginPath();
+  ctx.roundRect(s*0.02, s*0.02, s*0.96, s*0.96, s*0.17);
+  ctx.stroke();
+  // dots — top left
+  ctx.fillStyle = "#d4684c";
+  ctx.beginPath(); ctx.arc(s*0.27, s*0.28, s*0.09, 0, Math.PI*2); ctx.fill();
+  // dot top right
+  ctx.fillStyle = "#5b7cb5";
+  ctx.beginPath(); ctx.arc(s*0.75, s*0.28, s*0.09, 0, Math.PI*2); ctx.fill();
+  // inner card
+  ctx.fillStyle = "rgba(255,255,255,.8)";
+  ctx.beginPath();
+  ctx.roundRect(s*0.18, s*0.48, s*0.64, s*0.38, s*0.08);
+  ctx.fill();
+  ctx.strokeStyle = "#d8d6ce";
+  ctx.lineWidth = s*0.015;
+  ctx.stroke();
+  // character
+  ctx.fillStyle = "#22222a";
+  ctx.font = "900 " + (s*0.32) + "px 'KaiTi','STKaiti','楷体',serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("读", s*0.5, s*0.68);
+}
+drawIcon(document.querySelector("#c180"), 180);
+drawIcon(document.querySelector("#c512"), 512);
+document.querySelector("#dl180").addEventListener("click", function(e){
+  e.preventDefault();
+  var a = document.createElement("a");
+  a.download = "icon-180.png";
+  a.href = document.querySelector("#c180").toDataURL("image/png");
+  a.click();
+});
+document.querySelector("#dl512").addEventListener("click", function(e){
+  e.preventDefault();
+  var a = document.createElement("a");
+  a.download = "icon-512.png";
+  a.href = document.querySelector("#c512").toDataURL("image/png");
+  a.click();
+});
+</script>
+</body>
+</html>

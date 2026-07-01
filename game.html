@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+    <meta name="theme-color" content="#2c4a7c" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="自主阅读" />
+    <title>若谷自主阅读计划</title>
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="./icons/icon-180.png" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="topbar" aria-label="闯关进度">
+        <div>
+          <a class="back-home" href="./index.html">← 首页</a>
+          <h1>若谷自主阅读计划</h1>
+        </div>
+        <div class="stats">
+          <div>
+            <span id="stars">0</span>
+            <small>总星</small>
+          </div>
+          <div>
+            <span id="fragments">0</span>
+            <small>碎片</small>
+          </div>
+        </div>
+      </section>
+
+      <section class="quest-card" aria-label="游戏规则">
+        <div>
+          <p>闯关规则</p>
+          <strong>认读 +1 星，听写 +3 星，阅读 +5 星</strong>
+          <small id="unlockStatus">每 10 星铸成 1 个神兵碎片</small>
+        </div>
+        <button class="primary-button" data-action="startQuest">开始闯关</button>
+      </section>
+
+      <nav class="scope-bar" id="scopeBar" aria-label="出题范围">
+        <button class="scope-tab active" data-scope="全部">全部</button>
+        <button class="scope-tab" data-scope="上册">上册</button>
+        <button class="scope-tab" data-scope="下册">下册</button>
+      </nav>
+
+      <nav class="mode-tabs" aria-label="关卡类型">
+        <button class="tab active" data-mode="recognize">认读关</button>
+        <button class="tab" data-mode="dictation">听写关</button>
+        <button class="tab" data-mode="reading">阅读关</button>
+        <button class="tab" data-mode="armory">神兵库</button>
+      </nav>
+
+      <div class="stage-row">
+        <section class="stage" id="stage" aria-live="polite"></section>
+        <aside class="forge-side" id="forgeSide" aria-label="神兵铸造进度">
+          <div class="forge-side-head">
+            <span class="forge-side-eyebrow">正在铸造</span>
+            <h3 class="forge-side-name" id="forgeSideName">—</h3>
+            <p class="forge-side-meta" id="forgeSideMeta">—</p>
+          </div>
+          <div class="forge-puzzle" id="forgePuzzle"></div>
+          <div class="forge-side-progress" id="forgeSideProgress">0/0 碎片</div>
+          <div class="forge-mini-grid" id="forgeMiniGrid"></div>
+        </aside>
+      </div>
+
+      <section class="literacy-strip" id="literacyStrip"></section>
+
+      <section class="progress-panel">
+        <div class="meter-row">
+          <span id="meterLabel">下一枚碎片</span>
+          <strong id="meterText">0/10</strong>
+        </div>
+        <div class="meter">
+          <div id="meterBar"></div>
+        </div>
+        <div class="rule-strip">
+          <span>10 星 = 1 碎片</span>
+          <span>碎片点满 = 收入武器库</span>
+          <span>前两件新手加速</span>
+        </div>
+      </section>
+    </main>
+
+    <script src="./grade1-words.js"></script>
+    <script src="./pinyin-data.js"></script>
+    <script src="./reading-texts.js"></script>
+    <script src="./words.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
