@@ -56,6 +56,8 @@ const LIB_CHARS = (function () {
 })();
 
 const state = loadState();
+// 内置 OCR Key，若谷不用每次输入
+if (!localStorage.getItem("ruogu-ocr-key")) localStorage.setItem("ruogu-ocr-key", "K87230002688957");
 let mode = "recognize";
 let scope = state.scope || "全部"; // 出题范围：上册 / 下册 / 全部
 let words = buildWordTable(scope); // 当前范围的词表
