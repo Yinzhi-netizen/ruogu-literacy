@@ -530,8 +530,8 @@ function setupHandwritingPad(word) {
     ocrStatus.innerHTML = "<span class='ocr-spinner'></span> 正在识别你写的字...";
     feedback.textContent = "";
 
-    const imageBlob = await captureCanvas(canvas);
-    const result = await recognizeCharacter(imageBlob);
+    const imageDataUrl = await captureCanvas(canvas);
+    const result = await recognizeCharacter(imageDataUrl);
 
     if (result.error === "no_key") {
       ocrStatus.className = "ocr-status ocr-warn";
@@ -557,7 +557,6 @@ function setupHandwritingPad(word) {
 }
 
 function captureCanvas(canvas) {
-  // Return a Blob for direct file upload (more reliable than base64)
   return new Promise(function (resolve) {
     var fullCanvas = document.createElement("canvas");
     fullCanvas.width = canvas.width;
@@ -566,21 +565,34 @@ function captureCanvas(canvas) {
     fctx.fillStyle = "#ffffff";
     fctx.fillRect(0, 0, fullCanvas.width, fullCanvas.height);
     fctx.drawImage(canvas, 0, 0);
-    fullCanvas.toBlob(function (blob) {
-      resolve(blob);
-    }, "image/png");
+    // 缩小到 800px 宽以内，减少上传体积，提升 OCR 速度
+    var scale = Math.min(1, 800 / fullCanvas.width);
+    if (scale < 1) {
+      var small = document.createElement("canvas");
+      small.width = Math.round(fullCanvas.width * scale);
+      small.height = Math.round(fullCanvas.height * scale);
+      var sctx = small.getContext("2d");
+      sctx.drawImage(fullCanvas, 0, 0, small.width, small.height);
+      resolve(small.toDataURL("image/png"));
+    } else {
+      resolve(fullCanvas.toDataURL("image/png"));
+    }
   });
 }
 
-async function recognizeCharacter(blob) {
+async function recognizeCharacter(dataUrl) {
   var apiKey = localStorage.getItem("ruogu-ocr-key");
   if (!apiKey) return { error: "no_key" };
 
+  // 去掉 data:image/png;base64, 前缀，只要纯 base64
+  var b64 = dataUrl.replace(/^data:image\/\w+;base64,/, "");
+
   var formData = new FormData();
-  formData.append("file", blob, "handwrite.png");
+  formData.append("base64Image", b64);
   formData.append("apikey", apiKey);
   formData.append("language", "chs");
   formData.append("OCREngine", "3");
+  formData.append("isOverlayRequired", "false");
 
   try {
     var res = await fetch("https://api.ocr.space/parse/image", {
