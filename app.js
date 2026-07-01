@@ -56,8 +56,8 @@ const LIB_CHARS = (function () {
 })();
 
 const state = loadState();
-// 内置 OCR Key，若谷不用每次输入
-if (!localStorage.getItem("ruogu-ocr-key")) localStorage.setItem("ruogu-ocr-key", "K87230002688957");
+// 内置 OCR Key，若谷不用每次输入（每次加载都保证有）
+localStorage.setItem("ruogu-ocr-key", "K87230002688957");
 let mode = "recognize";
 let scope = state.scope || "全部"; // 出题范围：上册 / 下册 / 全部
 let words = buildWordTable(scope); // 当前范围的词表
@@ -82,7 +82,13 @@ function freshState() {
 function loadState() {
   try {
     const saved = JSON.parse(localStorage.getItem(storeKey));
-    if (saved) return saved;
+    if (saved) {
+      // 兜底修复：iPad 上之前可能因 sw 缓存执行了旧 app.js，把 v5 存成 0 星
+      if (typeof saved.totalStars !== "number" || saved.totalStars < 280) {
+        saved.totalStars = 280;
+      }
+      return saved;
+    }
   } catch {}
   // 首次进入 v4：迁移旧版(v3)的星数/碎片进度，保留若谷已有成果
   const fresh = freshState();
