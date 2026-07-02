@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
     <meta name="theme-color" content="#2c4a7c" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="自主阅读" />
     <title>若谷自主阅读计划</title>
@@ -85,10 +86,19 @@
       </section>
     </main>
 
+    <!-- 数据源 -->
     <script src="./grade1-words.js"></script>
     <script src="./pinyin-data.js"></script>
     <script src="./reading-texts.js"></script>
-    <script src="./words.js"></script>
+    <script src="./words.js"></script>          <!-- 保留 RUOGU_STORIES 兼容旧阅读入口 -->
+    <script src="./weapons.js"></script>        <!-- 唯一武器数据源 -->
+    <!-- 功能模块（按依赖顺序）-->
+    <script src="./state-store.js"></script>
+    <script src="./word-data.js"></script>
+    <script src="./progress.js"></script>
+    <script src="./ocr-handwriting.js"></script>
+    <script src="./weapon-system.js"></script>
+    <script src="./ui-common.js"></script>
     <script src="./app.js"></script>
   </body>
 </html>

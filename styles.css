@@ -1133,11 +1133,71 @@ h1 {
   transition: all .3s ease;
 }
 
-.lit-char.known {
-  background: linear-gradient(180deg, #fde8e2, #fdf5f2);
-  color: var(--accent);
-  box-shadow: 0 0 8px rgba(212, 104, 76, .2);
-  border: 1px solid rgba(212, 104, 76, .3);
+/* 识字三档蓝（按答对次数由浅到深）*/
+.lit-char.lvl-1 {
+  background: #dce6f4;
+  color: var(--primary-deep);
+  border: 1px solid #c4d5ec;
+}
+
+.lit-char.lvl-2 {
+  background: #9fbde2;
+  color: #1d3358;
+  border: 1px solid #85a9d6;
+}
+
+.lit-char.lvl-3 {
+  background: linear-gradient(180deg, var(--primary), var(--primary-deep));
+  color: #fff;
+  border: 1px solid var(--primary-deep);
+  box-shadow: 0 0 8px rgba(44, 74, 124, .3);
+}
+
+/* 会写掌握：右上角小笔标记（叠加在任意档位上）*/
+.lit-char.can-write {
+  position: relative;
+}
+
+.lit-char.can-write::after {
+  content: '✍';
+  position: absolute;
+  top: -7px;
+  right: -5px;
+  font-size: 10px;
+  color: var(--accent-deep);
+  text-shadow: 0 0 2px #fff;
+}
+
+/* 需要复习：橙色虚线描边（不覆盖档位色）*/
+.lit-char.review {
+  outline: 2px dashed rgba(184, 74, 48, .55);
+  outline-offset: -2px;
+}
+
+/* 识字条图例小圆点 */
+.lit-legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.lit-legend .dot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  margin-left: 8px;
+}
+
+.lit-legend .dot.lvl-1 { background: #dce6f4; border: 1px solid #c4d5ec; }
+.lit-legend .dot.lvl-2 { background: #9fbde2; border: 1px solid #85a9d6; }
+.lit-legend .dot.lvl-3 { background: linear-gradient(180deg, var(--primary), var(--primary-deep)); }
+
+.lit-legend em {
+  font-style: normal;
+  margin-left: 8px;
+  color: var(--ink-muted);
+  font-weight: 800;
 }
 
 /* ---- Story browser ---- */

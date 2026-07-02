@@ -22,17 +22,17 @@
         <div class="library-grid" id="libraryGrid"></div>
       </section>
     </main>
-    <script src="./weapon-library.js"></script>
+    <script src="./weapons.js"></script>
     <script>
       const grid = document.querySelector("#libraryGrid");
-      window.RUOGU_WEAPON_LIBRARY.forEach((weapon) => {
+      window.RUOGU_WEAPONS.forEach((weapon) => {
         const card = document.createElement("section");
         card.className = "library-card";
         card.innerHTML = `
           <img src="${weapon.image}" alt="${weapon.name}" />
           <div>
             <h2>${weapon.name}</h2>
-            <p>${weapon.book} · ${weapon.hero}</p>
+            <p>${weapon.source} · ${weapon.hero}</p>
             <div class="power-line"><span style="width:${weapon.power}%"></span></div>
             <strong>武力值 ${weapon.power}</strong>
             <p>${weapon.intro}</p>

@@ -1,18 +1,39 @@
-const cacheName = "ruogu-literacy-v12";
+const cacheName = "ruogu-literacy-v14";
 const assets = [
   "./",
   "./index.html",
   "./game.html",
+  "./weapon-library.html",
+  "./weapon-preview.html",
+  "./library-view.html",
   "./styles.css",
   "./grade1-words.js",
+  "./grade1-library.js",
   "./pinyin-data.js",
   "./reading-texts.js",
   "./words.js",
+  "./weapons.js",
+  "./state-store.js",
+  "./word-data.js",
+  "./progress.js",
+  "./ocr-handwriting.js",
+  "./weapon-system.js",
+  "./ui-common.js",
   "./app.js",
   "./manifest.webmanifest",
   "./icons/icon-180.png",
   "./icons/icon-192.svg",
-  "./icons/icon-512.svg"
+  "./icons/icon-512.svg",
+  "./assets/weapons-png/01_jingubang.png",
+  "./assets/weapons-png/02_jiuchidingpa.png",
+  "./assets/weapons-png/04_sanjianliangrendao.png",
+  "./assets/weapons-png/05_bajiaoshan.png",
+  "./assets/weapons-png/11_dashenbian.png",
+  "./assets/weapons-png/12_fantianyin.png",
+  "./assets/weapons-png/13_qiankunquan.png",
+  "./assets/weapons-png/16_shuimochanzhang.png",
+  "./assets/weapons-png/18_langyabang.png",
+  "./assets/weapons-png/24_jinshejian.png"
 ];
 
 self.addEventListener("install", (event) => {
