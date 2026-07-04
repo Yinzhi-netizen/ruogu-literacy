@@ -174,6 +174,54 @@ const READING_CATS = [
   { key: "poems", icon: "🌸", name: "古诗", items: () => readingTexts.poems || [], annotate: true }
 ];
 
+const READING_FILTERS = [
+  { key: "all", label: "全部" },
+  { key: "unread", label: "未读" },
+  { key: "read", label: "已读" },
+  { key: "easy", label: "简单" },
+  { key: "challenge", label: "挑战" },
+  { key: "hard", label: "难" }
+];
+
+let readingFilter = "all"; // 当前阅读筛选
+
+function readingScore(item, catKey, index) {
+  const key = readingKeyOf(catKey, item, index);
+  const completedReadings = STATE.active().completedReadings || {};
+  const isRead = Boolean(completedReadings[key]);
+  const cov = DATA.textCoverage(item.text);
+  const len = [...item.text].filter((c) => /[一-鿿]/.test(c)).length;
+
+  let score = 0;
+  if (!isRead) score += 50;
+  if (cov >= 60 && cov <= 85) score += 20;
+  if (cov < 40) score -= 30;
+  score -= len * 0.05;
+  return score;
+}
+
+function readingFilterMatch(item, catKey, index, filter) {
+  const key = readingKeyOf(catKey, item, index);
+  const completedReadings = STATE.active().completedReadings || {};
+  const isRead = Boolean(completedReadings[key]);
+  const cov = DATA.textCoverage(item.text);
+  if (filter === "unread") return !isRead;
+  if (filter === "read") return isRead;
+  if (filter === "easy") return cov >= 85;
+  if (filter === "challenge") return cov >= 60 && cov < 85;
+  if (filter === "hard") return cov < 60;
+  return true;
+}
+
+function bestNextReading(cat) {
+  const items = cat.items();
+  const scored = items
+    .map((item, index) => ({ item, index, score: readingScore(item, cat.key, index) }))
+    .filter((x) => readingFilterMatch(x.item, cat.key, x.index, "unread"))
+    .sort((a, b) => b.score - a.score);
+  return scored.length ? scored[0] : null;
+}
+
 function renderReadingText(text, py, annotate) {
   py = py || {};
   let html = "";
@@ -195,8 +243,21 @@ function readingKeyOf(cat, item, index) {
 function renderReading() {
   readingInArticle = false;
   const cat = READING_CATS.find((c) => c.key === readingCat) || READING_CATS[0];
-  const items = cat.items();
+  const rawItems = cat.items();
   const completedReadings = STATE.active().completedReadings || {};
+
+  const scoredItems = rawItems.map((item, index) => ({
+    item,
+    index,
+    key: readingKeyOf(cat.key, item, index),
+    score: readingScore(item, cat.key, index)
+  }));
+
+  const filteredItems = scoredItems
+    .filter((x) => readingFilterMatch(x.item, cat.key, x.index, readingFilter))
+    .sort((a, b) => b.score - a.score);
+
+  const next = bestNextReading(cat);
 
   stage.innerHTML = `
     <article class="reader reader-browser">
@@ -206,18 +267,29 @@ function renderReading() {
           `<button class="scope-tab ${c.key === readingCat ? "active" : ""}" data-cat="${c.key}">${c.icon} ${c.name}</button>`
         ).join("")}
       </div>
+      ${next ? `
+        <div class="continue-reading-bar">
+          <button class="primary-button continue-reading-btn" data-index="${next.index}">🔥 继续读《${next.item.title || cat.name}》</button>
+        </div>
+      ` : ""}
+      <div class="reading-filter-bar">
+        ${READING_FILTERS.map((f) =>
+          `<button class="reading-filter-pill ${f.key === readingFilter ? "active" : ""}" data-filter="${f.key}">${f.label}</button>`
+        ).join("")}
+      </div>
       <p class="prompt">认识的字越多，读起来越轻松。黄底字带拼音，可以拼出来。</p>
       <div class="story-list">
-        ${items.map((item, index) => {
-          const key = readingKeyOf(cat.key, item, index);
-          const done = Boolean(completedReadings[key]);
-          const cov = DATA.textCoverage(item.text);
-          const sub = item.author ? item.author : (item.type || "");
+        ${filteredItems.map((x) => {
+          const done = Boolean(completedReadings[x.key]);
+          const cov = DATA.textCoverage(x.item.text);
+          const sub = x.item.author ? x.item.author : (x.item.type || "");
+          const isTop = x === filteredItems[0] && !done && readingFilter === "all";
           return `
-            <button class="story-pick" data-index="${index}">
+            <button class="story-pick ${done ? "is-read" : ""}" data-index="${x.index}">
               <div class="story-pick-head">
-                <strong>${item.title || (cat.name + (index + 1))}</strong>
-                <span class="coverage-badge ${cov >= 85 ? "high" : cov >= 70 ? "mid" : "low"}">认识 ${cov}%</span>
+                <strong>${x.item.title || (cat.name + (x.index + 1))}</strong>
+                ${isTop ? `<span class="recommend-badge">推荐</span>` : ""}
+                <span class="coverage-badge ${cov >= 85 ? "high" : cov >= 60 ? "mid" : "low"}">认识 ${cov}%</span>
               </div>
               <small>${done ? "✅ 已读完" : "🆕 未读"}${sub ? " · " + sub : ""}</small>
             </button>
@@ -231,15 +303,31 @@ function renderReading() {
   stage.querySelectorAll(".reading-cats .scope-tab").forEach((btn) => {
     btn.addEventListener("click", () => {
       readingCat = btn.dataset.cat;
+      readingFilter = "all";
       persist();
       renderReading();
     });
   });
 
+  stage.querySelectorAll(".reading-filter-pill").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      readingFilter = btn.dataset.filter;
+      renderReading();
+    });
+  });
+
+  const continueBtn = stage.querySelector(".continue-reading-btn");
+  if (continueBtn) {
+    continueBtn.addEventListener("click", () => {
+      const idx = parseInt(continueBtn.dataset.index, 10);
+      renderStoryReader(cat, rawItems[idx], idx);
+    });
+  }
+
   stage.querySelectorAll(".story-pick").forEach((btn) => {
     btn.addEventListener("click", () => {
       const idx = parseInt(btn.dataset.index, 10);
-      renderStoryReader(cat, items[idx], idx);
+      renderStoryReader(cat, rawItems[idx], idx);
     });
   });
 }

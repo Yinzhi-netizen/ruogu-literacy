@@ -104,47 +104,92 @@
   }
 
   let literacyExpanded = false;
+  let literacyFilter = "all"; // all | unread | unwrite | review | mastered
+
+  const FILTERS = [
+    { key: "all", label: "全部" },
+    { key: "unread", label: "不会认" },
+    { key: "unwrite", label: "不会写" },
+    { key: "review", label: "待复习" },
+    { key: "mastered", label: "已掌握" }
+  ];
+
+  function getCharState(word) {
+    const readMastered = PROGRESS.isMasteredRead(word);
+    const writeMastered = PROGRESS.isMasteredWrite(word);
+    const needsReview = PROGRESS.needsReview(word);
+    const readHits = (PROGRESS.readLevel(word) || 0);
+
+    if (needsReview) return { key: "review", label: "待复习" };
+    if (readMastered && writeMastered) return { key: "mastered-both", label: "会认且会写" };
+    if (writeMastered) return { key: "can-write", label: "会写" };
+    if (readMastered || readHits > 0) return { key: "can-read", label: readMastered ? "会认" : "认过" };
+    return { key: "unseen", label: "还没认" };
+  }
+
+  function matchesFilter(word, filter) {
+    const readMastered = PROGRESS.isMasteredRead(word);
+    const writeMastered = PROGRESS.isMasteredWrite(word);
+    const needsReview = PROGRESS.needsReview(word);
+    if (filter === "unread") return !readMastered;
+    if (filter === "unwrite") return !writeMastered;
+    if (filter === "review") return needsReview;
+    if (filter === "mastered") return readMastered && writeMastered;
+    return true;
+  }
 
   function renderLiteracyStrip(scope, words) {
     const strip = document.querySelector("#literacyStrip");
     if (!strip) return;
 
-    // 三档统计：答对 1 次 / 2 次 / ≥3 次
-    let lv1 = 0, lv2 = 0, lv3 = 0;
-    const chars = words.map((w) => {
-      const level = PROGRESS.readLevel(w.word);
-      const write = PROGRESS.isMasteredWrite(w.word);
-      const review = PROGRESS.needsReview(w.word);
-      if (level === 1) lv1++;
-      else if (level === 2) lv2++;
-      else if (level >= 3) lv3++;
-      let cls = "lit-char";
-      if (level > 0) cls += " lvl-" + level;
-      if (write) cls += " can-write";
-      if (review) cls += " review";
-      const lvlText = level === 0 ? "还没认" : level === 1 ? "认过 1 次" : level === 2 ? "认过 2 次" : "很熟（≥3 次）";
-      const tag = lvlText + (write ? " ✍会写" : "") + (review ? " ⟳该复习" : "");
-      return `<span class="${cls}" title="${w.word}（${w.pinyin}）· ${tag}">${w.word}</span>`;
-    }).join("");
+    let canRead = 0, canWrite = 0, reviewCount = 0, masteredBoth = 0;
+    const charItems = words.map((w) => {
+      const state = getCharState(w.word);
+      if (state.key === "can-read" || state.key === "mastered-both") canRead++;
+      if (state.key === "can-write" || state.key === "mastered-both") canWrite++;
+      if (state.key === "review") reviewCount++;
+      if (state.key === "mastered-both") masteredBoth++;
 
-    const seen = lv1 + lv2 + lv3;
+      const visible = matchesFilter(w.word, literacyFilter);
+      let cls = "lit-char " + state.key;
+      return {
+        html: `<span class="${cls}" title="${w.word}（${w.pinyin || ""}）· ${state.label}" style="display:${visible ? "inline-flex" : "none"}">${w.word}</span>`,
+        visible
+      };
+    });
+
+    const charsHtml = charItems.map((i) => i.html).join("");
+    const visibleCount = charItems.filter((i) => i.visible).length;
+
+    const filterPills = FILTERS.map((f) =>
+      `<button class="lit-filter-pill ${f.key === literacyFilter ? "active" : ""}" data-filter="${f.key}">${f.label}</button>`
+    ).join("");
 
     strip.innerHTML = ""
       + "<div class=\"lit-summary\" id=\"litToggle\">"
       + "  <strong>📚 识词（" + scope + "）</strong>"
-      + "  <span class=\"lit-legend\">"
-      + "    <i class=\"dot lvl-1\"></i>" + lv1
-      + "    <i class=\"dot lvl-2\"></i>" + lv2
-      + "    <i class=\"dot lvl-3\"></i>" + lv3
-      + "    <em>共 " + seen + "/" + words.length + "</em>"
+      + "  <span class=\"lit-stats\">"
+      + "    <span class=\"stat-read\">会认 " + canRead + "/" + words.length + "</span>"
+      + "    <span class=\"stat-write\">会写 " + canWrite + "</span>"
+      + "    <span class=\"stat-review\">待复习 " + reviewCount + "</span>"
       + "  </span>"
       + "  <button class=\"lit-toggle-btn\">" + (literacyExpanded ? "收起 ▲" : "展开 ▼") + "</button>"
       + "</div>"
-      + "<div class=\"lit-char-grid\" style=\"display:" + (literacyExpanded ? "flex" : "none") + "\">" + chars + "</div>";
+      + "<div class=\"lit-filter-bar\" style=\"display:" + (literacyExpanded ? "flex" : "none") + "\">" + filterPills + "</div>"
+      + "<div class=\"lit-char-grid\" style=\"display:" + (literacyExpanded ? "flex" : "none") + "\">" + charsHtml + "</div>"
+      + "<div class=\"lit-empty-hint\" style=\"display:" + (literacyExpanded && visibleCount === 0 ? "block" : "none") + "\">这一栏暂时没有字。</div>";
 
     document.querySelector("#litToggle").addEventListener("click", function () {
       literacyExpanded = !literacyExpanded;
       renderLiteracyStrip(scope, words);
+    });
+
+    strip.querySelectorAll(".lit-filter-pill").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        literacyFilter = btn.dataset.filter;
+        renderLiteracyStrip(scope, words);
+      });
     });
   }
 
