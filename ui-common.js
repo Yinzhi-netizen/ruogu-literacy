@@ -60,46 +60,33 @@
         <div class="level-badge">${reason}</div>
         <div class="gain">+${amount}</div>
         <h2>获得 ${amount} 星</h2>
-        <p>${WS.unlockText()}</p>
-        <div class="actions two-actions">
-          <button class="soft-button" data-action="armory">看神兵库</button>
+        <p>星星可以继续积累，也可以之后换小人对战时间和强力技能。</p>
+        <div class="actions">
           <button class="primary-button" data-action="continue">继续闯关</button>
         </div>
       </article>
     `;
-    stage.querySelector("[data-action='armory']").addEventListener("click", () => callbacks.onArmory());
     stage.querySelector("[data-action='continue']").addEventListener("click", () => callbacks.onContinue());
   }
 
   function renderForge(stage, { amount, reason, beforeFragments, afterFragments }, callbacks) {
     animateStarGain(amount, stage);
-    const after = WS.weaponStateByFragments(afterFragments);
-    const unlockedNow = WS.unlockedWeaponCount(afterFragments) > WS.unlockedWeaponCount(beforeFragments);
-    const title = unlockedNow ? `${after.weapon.name} 解锁！` : "神兵碎片 +1";
-    const subtitle = unlockedNow
-      ? `${after.weapon.source} · ${after.weapon.hero} 的神兵已收入武器库`
-      : `${after.weapon.name} 已点亮 ${after.progress}/${after.weapon.fragmentsRequired}`;
-
     stage.innerHTML = `
-      <article class="forge-scene ${unlockedNow ? "unlock" : ""}">
+      <article class="forge-scene">
         <div class="spark s1"></div>
         <div class="spark s2"></div>
         <div class="spark s3"></div>
         <div class="level-badge">${reason} · +${amount} 星</div>
         <div class="forge-core">
           <div class="forge-stars">★ ★ ★ ★ ★</div>
-          <div class="weapon-silhouette forge-weapon ${unlockedNow ? "complete" : ""}">${unlockedNow && after.weapon.image ? `<img src="${after.weapon.image}" alt="${after.weapon.name}"/>` : after.weapon.mark}</div>
-          <h2>${title}</h2>
-          <p>${subtitle}</p>
-          <div class="fragment-row forge-dots">${WS.fragmentDots(after.progress, after.weapon.fragmentsRequired)}</div>
+          <h2>星星 +${amount}</h2>
+          <p>总星已经保存。之后可以用总星兑换小人对战时间、彩虹防护罩和变身次数。</p>
         </div>
-        <div class="actions two-actions">
-          <button class="soft-button" data-action="armory">收入武器库</button>
+        <div class="actions">
           <button class="primary-button" data-action="continue">继续闯关</button>
         </div>
       </article>
     `;
-    stage.querySelector("[data-action='armory']").addEventListener("click", () => callbacks.onArmory());
     stage.querySelector("[data-action='continue']").addEventListener("click", () => callbacks.onContinue());
   }
 
@@ -195,15 +182,23 @@
 
   function renderProgress(mode, readingInArticle, scope, words) {
     const totalStars = WS.totalStars();
-    const starProgress = totalStars % 10;
-    const active = WS.weaponStateByFragments();
-    document.querySelector("#stars").textContent = totalStars;
-    document.querySelector("#fragments").textContent = WS.totalFragments();
-    document.querySelector("#unlockStatus").textContent = WS.unlockText();
-    document.querySelector("#meterLabel").textContent = `下一枚碎片 · ${active.weapon.name} ${active.progress}/${active.weapon.fragmentsRequired}`;
-    document.querySelector("#meterText").textContent = `${starProgress}/10`;
+    const starProgress = totalStars % 50;
+    const starsEl = document.querySelector("#stars");
+    const fragmentsEl = document.querySelector("#fragments");
+    const unlockStatusEl = document.querySelector("#unlockStatus");
+    const meterLabelEl = document.querySelector("#meterLabel");
+    const meterTextEl = document.querySelector("#meterText");
+    if (starsEl) starsEl.textContent = totalStars;
+    if (fragmentsEl) fragmentsEl.textContent = WS.totalFragments();
+    if (unlockStatusEl) unlockStatusEl.textContent = "总星可兑换小人对战时间和强力技能";
+    if (meterLabelEl) meterLabelEl.textContent = "小人对战兑换";
+    if (meterTextEl) meterTextEl.textContent = `${starProgress}/50`;
 
     const meterBar = document.querySelector("#meterBar");
+    if (!meterBar) {
+      renderLiteracyStrip(scope, words);
+      return;
+    }
     const currentWidth = parseFloat(meterBar.style.width) || 0;
 
     if (starProgress === 0 && currentWidth > 50) {
@@ -216,11 +211,12 @@
         });
       });
     } else {
-      meterBar.style.width = `${(starProgress / 10) * 100}%`;
+      meterBar.style.width = `${(starProgress / 50) * 100}%`;
     }
 
     renderLiteracyStrip(scope, words);
-    WS.renderForgeSide(mode, readingInArticle);
+    const forgeSide = document.querySelector("#forgeSide");
+    if (forgeSide) WS.renderForgeSide(mode, readingInArticle);
   }
 
   window.RUOGU_UI = {

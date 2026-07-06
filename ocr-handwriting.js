@@ -14,7 +14,7 @@
     if (!word || !word.word) {
       stage.innerHTML = `
         <article class="challenge dictation-card">
-          <div class="level-badge">听写关 · +3 星</div>
+          <div class="level-badge">听写关 · +10 星</div>
           <div class="feedback">这个范围里暂时没有「会写词」，换个范围试试。</div>
         </article>`;
       return;
@@ -28,7 +28,7 @@
     const ratioStyle = n > 1 ? `style="--pad-ratio:${n} / 1"` : "";
     stage.innerHTML = `
       <article class="challenge dictation-card">
-        <div class="level-badge">听写关 · +3 星</div>
+        <div class="level-badge">听写关 · +10 星</div>
         <button class="target listen-target" data-action="speak">🔊 听词语</button>
         <canvas class="handwrite-pad${multiClass}" ${ratioStyle} width="${padW}" height="${padH}" data-cells="${n}" aria-label="手写区域"></canvas>
         <div class="ocr-status" hidden></div>
@@ -304,7 +304,7 @@
         <div class="actions three-actions">
           <button class="soft-button" data-action="retryManual">再写一次</button>
           <button class="soft-button" data-action="peekAnswerInline">👀 看答案</button>
-          <button class="primary-button" data-action="manualPass">我写对了，+3 星</button>
+          <button class="primary-button" data-action="manualPass">我写对了，+10 星</button>
         </div>
         <p class="hit-hint">点「我写对了」要诚实哦～写对了才点。</p>
       </div>

@@ -93,24 +93,23 @@ function currentDictWord() {
   return dictWord || { word: "", pinyin: "", lesson: "", unit: "", vol: "", isWrite: true };
 }
 
-// ===== 得星 → 结果页 / 铸造页 =====
-function awardStars(amount, reason) {
+// ===== 得星 → 结果页 / 连续模式 =====
+function awardStars(amount, reason, options = {}) {
   const p = STATE.active();
-  const before = Math.floor((p.totalStars || 0) / 10);
   p.totalStars = (p.totalStars || 0) + amount;
   STATE.save();
-  const after = WS.totalFragments();
+
+  if (options.silent) {
+    UI.animateStarGain(amount, stage);
+    renderProgress();
+    return;
+  }
 
   const callbacks = {
-    onArmory: () => { mode = "armory"; render(); },
     onContinue: () => render()
   };
 
-  if (after > before) {
-    UI.renderForge(stage, { amount, reason, beforeFragments: before, afterFragments: after }, callbacks);
-  } else {
-    UI.renderResult(stage, amount, reason, callbacks);
-  }
+  UI.renderResult(stage, amount, reason, callbacks);
   renderProgress();
 }
 
@@ -137,11 +136,14 @@ function renderRecognize() {
     button.addEventListener("click", () => {
       if (button.dataset.pinyin === word.pinyin) {
         PROGRESS.recordReadSuccess(word.word);
-        feedback.textContent = "太棒了！";
+        feedback.textContent = "太棒了！+1 星，下一题来了。";
         feedback.classList.add("glow");
         feedback.addEventListener("animationend", () => feedback.classList.remove("glow"), { once: true });
-        nextWord();
-        awardStars(1, "认读成功");
+        awardStars(1, "认读成功", { silent: true });
+        setTimeout(() => {
+          nextWord();
+          renderRecognize();
+        }, 360);
       } else {
         PROGRESS.recordError(word.word, "read");
         feedback.textContent = `再想想，「${word.word}」读「${word.pinyin}」。`;
@@ -160,7 +162,7 @@ function renderDictation() {
       // 听写正确记一次会写答对（用于识字条分档：1/2/≥3 次）
       PROGRESS.recordWriteSuccess(w.word);
       pickDictWord();
-      awardStars(3, reason);
+      awardStars(10, reason || "写字成功");
     },
     onError: (w) => PROGRESS.recordError(w.word, "write"),
     onPickNext: () => { pickDictWord(); renderDictation(); }
@@ -393,7 +395,6 @@ function render() {
     if (mode === "recognize") renderRecognize();
     if (mode === "dictation") renderDictation();
     if (mode === "reading") renderReading();
-    if (mode === "armory") WS.renderArmory(stage);
     renderProgress();
 
     requestAnimationFrame(() => {
