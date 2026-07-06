@@ -324,7 +324,7 @@ h1 {
 /* ---- Mode tabs ---- */
 .mode-tabs {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 1px;
   border: 1px solid var(--line);
   border-radius: 6px;
@@ -2428,7 +2428,7 @@ h1 {
   .stats span { font-size: 20px; }
   .stats small { font-size: 11px; }
 
-  .mode-tabs { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .mode-tabs { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 
   .tab {
     height: 44px;

@@ -10,7 +10,6 @@ const DATA = window.RUOGU_WORD_DATA;
 const PROGRESS = window.RUOGU_PROGRESS;
 const DICT = window.RUOGU_DICTATION;   // 听写手写板模块（区别于识字库数据 RUOGU_OCR）
 const WS = window.RUOGU_WEAPON_SYSTEM;
-const DUEL = window.RUOGU_DUEL_SYSTEM;
 const UI = window.RUOGU_UI;
 
 // ===== 初始化：加载档案 + 迁移旧数据 =====
@@ -394,7 +393,6 @@ function render() {
     if (mode === "recognize") renderRecognize();
     if (mode === "dictation") renderDictation();
     if (mode === "reading") renderReading();
-    if (mode === "duel") DUEL.renderDuel(stage);
     if (mode === "armory") WS.renderArmory(stage);
     renderProgress();
 

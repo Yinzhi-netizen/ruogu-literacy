@@ -18,7 +18,6 @@ const assets = [
   "./progress.js",
   "./ocr-handwriting.js",
   "./weapon-system.js",
-  "./duel-system.js",
   "./ui-common.js",
   "./app.js",
   "./manifest.webmanifest",
@@ -34,13 +33,7 @@ const assets = [
   "./assets/weapons-png/13_qiankunquan.png",
   "./assets/weapons-png/16_shuimochanzhang.png",
   "./assets/weapons-png/18_langyabang.png",
-  "./assets/weapons-png/24_jinshejian.png",
-  "./Ruogu Painting/cutouts/1_cutout.png",
-  "./Ruogu Painting/cutouts/2_cutout.png",
-  "./Ruogu Painting/cutouts/4_cutout.png",
-  "./Ruogu Painting/cutouts/5_cutout.png",
-  "./Ruogu Painting/cutouts/6_cutout.png",
-  "./Ruogu Painting/cutouts/10_cutout.png"
+  "./assets/weapons-png/24_jinshejian.png"
 ];
 
 self.addEventListener("install", (event) => {
