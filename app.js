@@ -10,6 +10,7 @@ const DATA = window.RUOGU_WORD_DATA;
 const PROGRESS = window.RUOGU_PROGRESS;
 const DICT = window.RUOGU_DICTATION;   // 听写手写板模块（区别于识字库数据 RUOGU_OCR）
 const WS = window.RUOGU_WEAPON_SYSTEM;
+const DUEL = window.RUOGU_DUEL_SYSTEM;
 const UI = window.RUOGU_UI;
 
 // ===== 初始化：加载档案 + 迁移旧数据 =====
@@ -393,6 +394,7 @@ function render() {
     if (mode === "recognize") renderRecognize();
     if (mode === "dictation") renderDictation();
     if (mode === "reading") renderReading();
+    if (mode === "duel") DUEL.renderDuel(stage);
     if (mode === "armory") WS.renderArmory(stage);
     renderProgress();
 
@@ -420,6 +422,141 @@ function bindGlobalScopeTabs() {
   });
 }
 
+function openProfileTools() {
+  const encodeSyncCode = (text) => {
+    const bytes = new TextEncoder().encode(text);
+    let binary = "";
+    bytes.forEach((b) => { binary += String.fromCharCode(b); });
+    return btoa(binary);
+  };
+  const decodeSyncCode = (code) => {
+    const clean = code.replace(/\s+/g, "");
+    const binary = atob(clean);
+    const bytes = Uint8Array.from(binary, (ch) => ch.charCodeAt(0));
+    return new TextDecoder().decode(bytes);
+  };
+
+  const overlay = document.createElement("div");
+  overlay.className = "profile-overlay";
+  const exported = STATE.exportProfiles();
+  const syncCode = encodeSyncCode(exported);
+  overlay.innerHTML = `
+    <div class="profile-card">
+      <button class="profile-close" data-action="closeProfileTools">×</button>
+      <p class="prompt">档案迁移</p>
+      <h2>导出 / 导入若谷记录</h2>
+      <p class="profile-note">星星、碎片、已解锁神兵都保存在这个浏览器的本地档案里。导入前会自动备份当前档案。</p>
+      <div class="profile-actions">
+        <button class="soft-button" data-action="downloadProfile">导出档案文件</button>
+        <label class="profile-file-button">
+          导入档案文件
+          <input type="file" id="profileFile" accept=".json,application/json,text/plain">
+        </label>
+      </div>
+      <label class="profile-field">
+        <span>同步码</span>
+        <textarea id="profileSyncCode" spellcheck="false">${syncCode}</textarea>
+      </label>
+      <div class="profile-actions">
+        <button class="soft-button" data-action="copySyncCode">复制同步码</button>
+        <button class="primary-button" data-action="importSyncCode">导入同步码</button>
+      </div>
+      <details class="profile-raw">
+        <summary>高级：查看原始档案 JSON</summary>
+      <textarea id="profileText">${exported.replace(/</g, "&lt;")}</textarea>
+      </details>
+      <div class="profile-actions">
+        <button class="soft-button" data-action="copyProfile">复制导出档案</button>
+        <button class="primary-button" data-action="importProfile">导入文本中的档案</button>
+      </div>
+      <div class="feedback" id="profileFeedback">在 iPad 上复制这里的档案文本，再到另一台设备导入。</div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  const text = overlay.querySelector("#profileText");
+  const sync = overlay.querySelector("#profileSyncCode");
+  const fileInput = overlay.querySelector("#profileFile");
+  const feedback = overlay.querySelector("#profileFeedback");
+  const close = () => overlay.remove();
+  const importText = (value) => {
+    const imported = STATE.importProfiles(value);
+    feedback.textContent = `导入成功：${imported.name || "若谷"}，${imported.totalStars || 0} 星。页面即将刷新。`;
+    setTimeout(() => location.reload(), 900);
+  };
+  fileInput.addEventListener("change", () => {
+    const file = fileInput.files && fileInput.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        importText(String(reader.result || ""));
+      } catch (err) {
+        feedback.textContent = err.message || "导入失败，请检查文件。";
+      }
+    };
+    reader.readAsText(file, "utf-8");
+  });
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay || e.target.dataset.action === "closeProfileTools") close();
+    if (e.target.dataset.action === "downloadProfile") {
+      const blob = new Blob([STATE.exportProfiles()], { type: "application/json;charset=utf-8" });
+      const a = document.createElement("a");
+      const date = new Date().toISOString().slice(0, 10);
+      a.href = URL.createObjectURL(blob);
+      a.download = `ruogu-literacy-profile-${date}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+      feedback.textContent = "已生成档案文件。";
+    }
+    if (e.target.dataset.action === "copySyncCode") {
+      sync.select();
+      const value = sync.value;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(value).then(() => {
+          feedback.textContent = "同步码已复制。";
+        }).catch(() => {
+          document.execCommand("copy");
+          feedback.textContent = "已选中并尝试复制同步码。";
+        });
+      } else {
+        document.execCommand("copy");
+        feedback.textContent = "已选中并尝试复制同步码。";
+      }
+    }
+    if (e.target.dataset.action === "importSyncCode") {
+      try {
+        importText(decodeSyncCode(sync.value));
+      } catch (err) {
+        feedback.textContent = "同步码无效，请检查是否复制完整。";
+      }
+    }
+    if (e.target.dataset.action === "copyProfile") {
+      text.select();
+      const value = text.value;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(value).then(() => {
+          feedback.textContent = "已复制。";
+        }).catch(() => {
+          document.execCommand("copy");
+          feedback.textContent = "已选中并尝试复制。";
+        });
+      } else {
+        document.execCommand("copy");
+        feedback.textContent = "已选中并尝试复制。";
+      }
+    }
+    if (e.target.dataset.action === "importProfile") {
+      try {
+        importText(text.value);
+      } catch (err) {
+        feedback.textContent = err.message || "导入失败，请检查文本。";
+      }
+    }
+  });
+}
+
 const startBtn = document.querySelector("[data-action='startQuest']");
 if (startBtn) {
   startBtn.addEventListener("click", () => {
@@ -427,6 +564,9 @@ if (startBtn) {
     render();
   });
 }
+
+const profileToolsBtn = document.querySelector("[data-action='profileTools']");
+if (profileToolsBtn) profileToolsBtn.addEventListener("click", openProfileTools);
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js"));

@@ -174,6 +174,35 @@
     saveProfiles();
   }
 
+  function exportProfiles() {
+    return JSON.stringify({
+      kind: "ruogu-literacy-profiles",
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      data: loadProfiles()
+    }, null, 2);
+  }
+
+  function importProfiles(text) {
+    let parsed;
+    try {
+      parsed = JSON.parse(text);
+    } catch {
+      throw new Error("档案不是有效的 JSON。");
+    }
+    const data = parsed && parsed.kind === "ruogu-literacy-profiles" ? parsed.data : parsed;
+    if (!data || !data.activeId || !data.profiles || !data.profiles[data.activeId]) {
+      throw new Error("没有找到可用的若谷识字档案。");
+    }
+    try {
+      localStorage.setItem(`${BACKUP_KEY}-${Date.now()}`, JSON.stringify(loadProfiles()));
+    } catch {}
+    profilesCache = data;
+    saveProfiles();
+    localStorage.setItem(MIGRATED_FLAG, "true");
+    return active();
+  }
+
   window.RUOGU_STATE = {
     freshProfile,
     loadProfiles,
@@ -188,6 +217,8 @@
     set,
     setSilent,
     save,
+    exportProfiles,
+    importProfiles,
     PROFILES_KEY,
     BACKUP_KEY
   };
