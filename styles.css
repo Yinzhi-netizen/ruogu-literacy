@@ -149,6 +149,12 @@ h1 {
   color: var(--primary);
 }
 
+.stats div:only-child::before {
+  content: '\2605';
+  font-size: 16px;
+  color: var(--accent);
+}
+
 .stats span {
   display: inline;
   font-family: var(--font-ui);
@@ -324,7 +330,7 @@ h1 {
 /* ---- Mode tabs ---- */
 .mode-tabs {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 1px;
   border: 1px solid var(--line);
   border-radius: 6px;
@@ -404,17 +410,123 @@ h1 {
 
 .stage-row {
   display: grid;
-  grid-template-columns: 1fr 260px;
+  grid-template-columns: minmax(0, 1fr) 260px;
   gap: 16px;
   align-items: stretch;
 }
 
-/* 阅读关列表 & 神兵库：侧栏隐藏时内容撑满 */
+/* 阅读关列表等无侧栏内容撑满 */
 .stage-row:has(.forge-side.hidden) {
   grid-template-columns: 1fr;
 }
 
 .stage-row > .stage { min-width: 0; }
+
+.duel-exchange {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background:
+    radial-gradient(circle at 90% 10%, rgba(212, 104, 76, .09), transparent 16rem),
+    rgba(255, 255, 255, .6);
+  box-shadow: var(--shadow-soft);
+  min-height: 100%;
+}
+
+.duel-exchange-head {
+  display: grid;
+  gap: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+.duel-exchange-head p {
+  margin: 0 0 4px;
+  color: var(--ink-muted);
+  font-family: var(--font-latin);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.duel-exchange-head strong {
+  display: block;
+  color: var(--primary-deep);
+  font-size: 21px;
+  line-height: 1.25;
+}
+
+.duel-open-link {
+  min-height: 40px;
+  display: grid;
+  place-items: center;
+  padding: 8px 14px;
+  border-radius: 6px;
+  background: var(--primary-deep);
+  color: #fff;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.duel-wallet {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.duel-wallet span {
+  min-height: 54px;
+  display: grid;
+  align-content: center;
+  gap: 2px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--ink-soft);
+  font-weight: 800;
+}
+
+.duel-wallet span strong {
+  color: var(--primary-deep);
+  font-family: var(--font-ui);
+  font-size: 24px;
+  line-height: 1;
+}
+
+.duel-wallet span small {
+  color: var(--ink-muted);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.duel-buy-row {
+  display: grid;
+  gap: 8px;
+}
+
+.duel-buy-row button {
+  width: 100%;
+  min-height: 44px;
+  border-radius: 6px;
+  padding: 8px 14px;
+}
+
+.duel-buy-row button:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+
+.duel-exchange-feedback {
+  color: var(--ink-muted);
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.45;
+}
 
 /* ---- Cards ---- */
 .study-card,
@@ -1770,57 +1882,6 @@ h1 {
   color: #8b1a1a;
 }
 
-/* ---- Progress panel ---- */
-.progress-panel {
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  background: rgba(255, 255, 255, .6);
-  padding: 14px;
-  box-shadow: var(--shadow-soft);
-}
-
-.meter-row {
-  display: flex;
-  justify-content: space-between;
-  font-weight: 800;
-  font-size: 14px;
-}
-
-.meter-row span { color: var(--ink-muted); }
-.meter-row strong { font-family: var(--font-ui); }
-
-.meter {
-  height: 6px;
-  margin: 10px 0 12px;
-  overflow: hidden;
-  border-radius: 999px;
-  background: var(--line);
-}
-
-.meter div {
-  width: 0;
-  height: 100%;
-  background: var(--primary);
-  border-radius: 999px;
-  box-shadow: none;
-  transition: width 500ms cubic-bezier(.4, 0, .2, 1);
-  position: relative;
-}
-
-.meter div::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, .35) 50%, transparent 100%);
-  border-radius: 999px;
-  animation: meterShimmer 2s ease-in-out infinite;
-}
-
-@keyframes meterShimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
-}
-
 /* ---- Card entrance ---- */
 .challenge,
 .study-card,
@@ -2169,52 +2230,73 @@ h1 {
 /* ---- Module cards ---- */
 .module-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
+  grid-template-columns: 1fr;
+  gap: 14px;
 }
 
 .module-card {
   position: relative;
-  padding: 28px 24px 24px;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  background: rgba(255, 255, 255, .55);
-  box-shadow: var(--shadow-card);
+  padding: 22px 22px 22px 24px;
+  border: 1px solid rgba(181, 174, 160, .45);
+  border-radius: 8px;
+  background: rgba(255, 253, 247, .88);
+  box-shadow:
+    0 1px 0 rgba(0, 0, 0, .04),
+    0 6px 20px rgba(60, 50, 36, .10);
   cursor: pointer;
-  transition: border-color .15s ease, box-shadow .15s ease;
+  transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease;
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+}
+
+.module-card-wide {
+  grid-column: auto;
 }
 
 .module-card:hover {
+  transform: translateY(-2px);
   border-color: var(--primary);
-  box-shadow: 0 4px 20px rgba(91, 124, 181, .1);
+  box-shadow:
+    0 1px 0 rgba(0, 0, 0, .04),
+    0 10px 28px rgba(60, 50, 36, .14);
 }
 
 .module-icon {
-  font-size: 32px;
-  margin-bottom: 10px;
+  flex: 0 0 auto;
+  font-size: 40px;
+  line-height: 1;
+  margin-top: 2px;
+}
+
+.module-card-body {
+  flex: 1;
+  display: grid;
+  gap: 5px;
 }
 
 .module-card h3 {
-  margin: 0 0 6px;
+  margin: 0;
   font-family: var(--font-heading);
   font-size: 20px;
   color: var(--ink);
 }
 
 .module-card p {
-  margin: 0 0 12px;
+  margin: 0;
   font-size: 14px;
-  color: var(--ink-muted);
-  line-height: 1.6;
+  color: var(--ink-soft);
+  line-height: 1.55;
   font-weight: 700;
 }
 
 .module-stars {
+  justify-self: start;
   display: inline-block;
-  padding: 3px 12px;
+  padding: 4px 12px;
   border-radius: 999px;
-  background: rgba(91, 124, 181, .08);
-  color: var(--primary);
+  background: rgba(212, 166, 66, .14);
+  color: #8f6a1f;
   font-family: var(--font-ui);
   font-size: 12px;
   font-weight: 700;
@@ -2428,7 +2510,7 @@ h1 {
   .stats span { font-size: 20px; }
   .stats small { font-size: 11px; }
 
-  .mode-tabs { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .mode-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 
   .tab {
     height: 44px;
@@ -2441,6 +2523,15 @@ h1 {
   .actions { grid-template-columns: 52px 1fr 1fr; }
 
   .quest-card { align-items: stretch; }
+
+  .duel-exchange-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .duel-open-link {
+    width: 100%;
+  }
 
   .weapon-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 

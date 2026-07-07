@@ -12,8 +12,30 @@
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="apple-touch-icon" href="./icons/icon-180.png" />
     <link rel="stylesheet" href="./styles.css" />
+    <style>
+      :root {
+        --primary: #7a8b5e;
+        --primary-deep: #4a5538;
+        --accent: #b8453a;
+      }
+      .page-bg {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+      }
+      .page-bg::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: rgba(26, 22, 20, .28);
+      }
+    </style>
   </head>
   <body>
+    <div class="page-bg" style="background-image: url('./assets/backgrounds/05_scholar_mountain.png');"></div>
     <main class="app-shell">
       <section class="topbar" aria-label="闯关进度">
         <div>
@@ -32,7 +54,7 @@
       <section class="quest-card" aria-label="游戏规则">
         <div>
           <p>闯关规则</p>
-          <strong>认读 +1 星，写字 +10 星，阅读 +5 星</strong>
+          <strong>认读 +2 星，写字 +10 星，阅读 +5 星</strong>
           <small id="unlockStatus">总星可以兑换小人对战时间和强力技能</small>
         </div>
         <button class="primary-button" data-action="startQuest">开始闯关</button>
@@ -52,24 +74,11 @@
 
       <div class="stage-row">
         <section class="stage" id="stage" aria-live="polite"></section>
+        <aside class="duel-exchange" id="duelExchange" aria-label="小人对战兑换"></aside>
       </div>
 
       <section class="literacy-strip" id="literacyStrip"></section>
 
-      <section class="progress-panel">
-        <div class="meter-row">
-          <span id="meterLabel">小人对战兑换</span>
-          <strong id="meterText">0 星</strong>
-        </div>
-        <div class="meter">
-          <div id="meterBar"></div>
-        </div>
-        <div class="rule-strip">
-          <span>50 星 = 5 分钟对战</span>
-          <span>20 星 = 1 次彩虹防护罩</span>
-          <span>30 星 = 1 次变身</span>
-        </div>
-      </section>
     </main>
 
     <!-- 数据源 -->
@@ -85,6 +94,7 @@
     <script src="./ocr-handwriting.js"></script>
     <script src="./weapon-system.js"></script>
     <script src="./ui-common.js"></script>
+    <script src="./duel-link.js"></script>
     <script src="./app.js"></script>
   </body>
 </html>

@@ -19,6 +19,7 @@ const assets = [
   "./ocr-handwriting.js",
   "./weapon-system.js",
   "./ui-common.js",
+  "./duel-link.js",
   "./app.js",
   "./manifest.webmanifest",
   "./icons/icon-180.png",

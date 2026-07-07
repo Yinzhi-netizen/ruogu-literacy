@@ -1,0 +1,87 @@
+// 若谷冒险游戏 · 数据源（独立版）
+// 阶段二接入识字 App 时，武器换成 weapons.js 的 RUOGU_WEAPONS，题目换成 buildWordTable()。
+
+// ===== 主角（若谷画的多手臂小英雄）=====
+const HEROES = {
+  player: "../Ruogu Painting/cutouts/1_cutout.png",
+  playerName: "若谷侠",
+};
+
+// ===== 武器 = 战斗力 =====
+// power 越高，答对每题得星越多。第一版自带精简几件（阶段二换成真实 10 件神兵）。
+const WEAPONS = [
+  { id: "quan",   name: "拳头",   power: 0,  emoji: "👊", desc: "空手也能闯！每答对 +2 星" },
+  { id: "qiankunquan", name: "乾坤圈", power: 60, emoji: "⭕", desc: "哪吒的宝物，每答对 +3 星" },
+  { id: "jiuchidingpa", name: "九齿钉耙", power: 80, emoji: "🔱", desc: "猪八戒的神兵，每答对 +4 星" },
+  { id: "jingubang", name: "金箍棒", power: 95, emoji: "🪄", desc: "孙悟空的定海神针，每答对 +5 星" },
+];
+
+// power → 每题得星（装备越强，得星越多）
+function starsForPower(power) {
+  if (power >= 95) return 5;
+  if (power >= 80) return 4;
+  if (power >= 60) return 3;
+  return 2;
+}
+
+// ===== 关卡（照第 11 张手绘地图的感觉，多个关卡点）=====
+// x / y 是关卡点在地图上的百分比坐标（0–100）。
+// 题目：看词语选正确读音；options 里含 1 个正确 + 3 个干扰。
+const LEVELS = [
+  {
+    id: 1,
+    name: "太阳森林",
+    x: 16, y: 74,
+    monster: "../Ruogu Painting/cutouts/5_cutout.png",   // 绿脸圆怪兽
+    monsterName: "圆滚滚",
+    hp: 3,
+    questions: [
+      { word: "太阳", pinyin: "tài yáng", options: ["tài yáng", "dà yáng", "tài yóng", "dài yáng"] },
+      { word: "大山", pinyin: "dà shān",  options: ["dà shān", "tài shān", "dà sān", "dà shāng"] },
+      { word: "小鸟", pinyin: "xiǎo niǎo", options: ["xiǎo niǎo", "xiǎo liǎo", "shǎo niǎo", "xiǎo niào"] },
+    ],
+  },
+  {
+    id: 2,
+    name: "彩虹山洞",
+    x: 40, y: 52,
+    monster: "../Ruogu Painting/cutouts/4_cutout.png",   // 方脸小人
+    monsterName: "方方",
+    hp: 3,
+    questions: [
+      { word: "白云", pinyin: "bái yún",  options: ["bái yún", "bái yūn", "bǎi yún", "bái yíng"] },
+      { word: "月亮", pinyin: "yuè liàng", options: ["yuè liàng", "yuè liáng", "yè liàng", "ruè liàng"] },
+      { word: "星星", pinyin: "xīng xing", options: ["xīng xing", "xīn xing", "xíng xing", "qīng xing"] },
+    ],
+  },
+  {
+    id: 3,
+    name: "音乐城堡",
+    x: 63, y: 30,
+    monster: "../Ruogu Painting/cutouts/10_cutout.png",  // 红脸圆头怪
+    monsterName: "红豆豆",
+    hp: 4,
+    questions: [
+      { word: "朋友", pinyin: "péng you", options: ["péng you", "pén you", "péng yǒu", "béng you"] },
+      { word: "快乐", pinyin: "kuài lè",  options: ["kuài lè", "kuǎi lè", "kài lè", "kuài rè"] },
+      { word: "唱歌", pinyin: "chàng gē", options: ["chàng gē", "chǎng gē", "càng gē", "chàng gé"] },
+      { word: "跳舞", pinyin: "tiào wǔ",  options: ["tiào wǔ", "tiáo wǔ", "tiào wù", "diào wǔ"] },
+    ],
+  },
+  {
+    id: 4,
+    name: "云顶宝殿",
+    x: 82, y: 16,
+    monster: "../Ruogu Painting/cutouts/6_cutout.png",   // 长方脸大怪（Boss）
+    monsterName: "大方块",
+    hp: 5,
+    boss: true,
+    questions: [
+      { word: "勇敢", pinyin: "yǒng gǎn", options: ["yǒng gǎn", "yóng gǎn", "yǒng gàn", "róng gǎn"] },
+      { word: "力气", pinyin: "lì qi",    options: ["lì qi", "lì qì", "nì qi", "lǐ qi"] },
+      { word: "胜利", pinyin: "shèng lì", options: ["shèng lì", "shèn lì", "chèng lì", "shèng lǐ"] },
+      { word: "回家", pinyin: "huí jiā",  options: ["huí jiā", "huī jiā", "huí jiá", "féi jiā"] },
+      { word: "宝贝", pinyin: "bǎo bèi",  options: ["bǎo bèi", "bāo bèi", "bǎo bēi", "bǎo pèi"] },
+    ],
+  },
+];

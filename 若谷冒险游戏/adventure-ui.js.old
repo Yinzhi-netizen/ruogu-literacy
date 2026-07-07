@@ -1,0 +1,480 @@
+// 若谷大冒险 · UI 渲染
+
+(function () {
+  "use strict";
+
+  const DATA = window.RUOGU_ADVENTURE_DATA;
+  const ENGINE = window.RUOGU_ADVENTURE_ENGINE;
+  const app = document.querySelector("#app");
+  let movingToNode = false;
+  let sceneState = null;
+
+  const materialName = {
+    leaf: "森林叶印",
+    mud: "沼泽泥晶",
+    echo: "回声石",
+    iron: "城堡铁片",
+    cloud: "云顶灵光"
+  };
+
+  function $(sel, root) {
+    return (root || document).querySelector(sel);
+  }
+
+  function img(src, cls, fallback) {
+    return `<img class="${cls}" src="${src}" alt="" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'${cls} fallback',textContent:'${fallback || "字"}'}))">`;
+  }
+
+  function stars(n) {
+    return "★".repeat(n) + "☆".repeat(Math.max(0, 3 - n));
+  }
+
+  function topbar() {
+    const save = ENGINE.state();
+    const weapon = ENGINE.equippedWeapon();
+    const armor = ENGINE.equippedArmor();
+    return `
+      <header class="ad-topbar">
+        <div>
+          <p class="eyebrow">RUOGU ADVENTURE</p>
+          <h1>若谷大冒险</h1>
+        </div>
+        <div class="hero-stats">
+          <button class="stat-pill" data-action="equipment">
+            <span>${weapon.mark || "兵"}</span>
+            <strong>${weapon.name}</strong>
+            <small>武力 ${weapon.power}</small>
+          </button>
+          <button class="stat-pill" data-action="equipment">
+            <span>甲</span>
+            <strong>${armor.name}</strong>
+            <small>防御 ${armor.defense}</small>
+          </button>
+          <div class="stat-pill hp-pill">
+            <span>心</span>
+            <strong>${save.hp}/${ENGINE.maxHp()}</strong>
+            <small>生命</small>
+          </div>
+          <div class="stat-pill star-pill">
+            <span>星</span>
+            <strong>${save.stars}</strong>
+            <small>总星</small>
+          </div>
+        </div>
+      </header>
+    `;
+  }
+
+  function renderMap() {
+    const save = ENGINE.state();
+    const clearedCount = DATA.NODES.filter((node) => ENGINE.isCleared(node.id)).length;
+    const heroNode = DATA.NODES[Math.min(clearedCount, DATA.NODES.length - 1)];
+    const nodes = DATA.NODES.map((node, index) => {
+      const unlocked = ENGINE.isUnlocked(node.id);
+      const cleared = ENGINE.isCleared(node.id);
+      const rating = save.bestRatings[node.id] || 0;
+      const typeLabel = { battle: "战", elite: "精", boss: "王", chest: "箱", rest: "泉" }[node.type] || "关";
+      const cls = ["map-node", `node-${node.type}`];
+      if (unlocked) cls.push("open");
+      if (cleared) cls.push("done");
+      if (!unlocked) cls.push("locked");
+      return `
+        <button class="${cls.join(" ")}" style="left:${node.x}%;top:${node.y}%"
+          data-node="${node.id}" ${unlocked ? "" : "disabled"}>
+          <span class="node-mark">${cleared ? "✓" : unlocked ? typeLabel : "锁"}</span>
+          <strong>${node.name}</strong>
+          <small>${rating ? stars(rating) : DATA.REGIONS.find((r) => r.id === node.region).tone}</small>
+        </button>
+      `;
+    }).join("");
+
+    const path = DATA.NODES.slice(0, -1).map((node, i) => {
+      const next = DATA.NODES[i + 1];
+      return `<line x1="${node.x}" y1="${node.y}" x2="${next.x}" y2="${next.y}"></line>`;
+    }).join("");
+
+    const regionCards = DATA.REGIONS.map((region) => {
+      const p = ENGINE.regionProgress(region.id);
+      return `
+        <section class="region-card">
+          <strong>${region.name}</strong>
+          <span>${region.tone}</span>
+          <small>${p.done}/${p.total}</small>
+        </section>
+      `;
+    }).join("");
+
+    const materialList = Object.keys(materialName).map((key) =>
+      `<span>${materialName[key]} ${save.materials[key] || 0}</span>`
+    ).join("");
+
+    app.innerHTML = `
+      ${topbar()}
+      <main class="ad-grid">
+        <section class="map-panel">
+          <div class="map-scroll">
+            <div class="map-art"></div>
+            <svg class="route-lines" viewBox="0 0 100 100" preserveAspectRatio="none">${path}</svg>
+            <div class="map-hero ${movingToNode ? "moving" : ""}" id="mapHero" style="left:${heroNode.x}%;top:${heroNode.y}%">
+              ${img(DATA.HERO.image, "map-hero-img", "哪")}
+              <span>若谷侠</span>
+            </div>
+            ${nodes}
+          </div>
+        </section>
+        <aside class="side-panel">
+          <section class="hero-card">
+            <div class="hero-portrait">${img(DATA.HERO.image, "hero-img", "哪")}</div>
+            <div>
+              <p class="eyebrow">小哪吒型识字英雄</p>
+              <h2>${DATA.HERO.name}</h2>
+              <p>读对字词就出招，带着神兵穿过森林、沼泽、山洞和云顶宝殿。</p>
+            </div>
+          </section>
+          <div class="region-grid">${regionCards}</div>
+          <section class="rule-box">
+            <strong>奖励册</strong>
+            <p>10 星铸成 1 个神兵碎片；宝箱会掉材料和盔甲。失败不扣星，半血再挑战。</p>
+            <div class="material-row">${materialList}</div>
+          </section>
+        </aside>
+      </main>
+    `;
+
+    app.querySelectorAll(".map-node.open").forEach((button) => {
+      button.addEventListener("click", () => moveHeroToNode(button.dataset.node));
+    });
+    bindTopbar();
+  }
+
+  function bindTopbar() {
+    app.querySelectorAll("[data-action='equipment']").forEach((button) => {
+      button.addEventListener("click", renderEquipment);
+    });
+  }
+
+  function openNode(id) {
+    const node = DATA.NODES.find((item) => item.id === id);
+    if (!node) return;
+    if (node.type === "chest") {
+      renderReward(ENGINE.openChest(id));
+      return;
+    }
+    if (node.type === "rest") {
+      renderRest(ENGINE.rest(id));
+      return;
+    }
+    ENGINE.startBattle(id);
+    renderBattle();
+  }
+
+  function questionMarkup(q) {
+    if (q.word) {
+      return `
+        <p class="challenge-label">看词语，选出正确读音</p>
+        <div class="quiz-word">${q.word}</div>
+      `;
+    }
+    if (q.pinyin) {
+      return `
+        <p class="challenge-label">看拼音，选出正确词语</p>
+        <div class="quiz-word latin">${q.pinyin}</div>
+      `;
+    }
+    return `
+      <p class="challenge-label">机关题</p>
+      <div class="quiz-prompt">${q.prompt}</div>
+    `;
+  }
+
+  function renderBattle() {
+    const battle = ENGINE.battle();
+    if (!battle) { renderMap(); return; }
+    const save = ENGINE.state();
+    const weapon = ENGINE.equippedWeapon();
+    const armor = ENGINE.equippedArmor();
+    const q = battle.question;
+    const monsterPct = Math.max(0, Math.round((battle.monsterHp / battle.monsterMaxHp) * 100));
+    const heroPct = Math.max(0, Math.round((save.hp / ENGINE.maxHp()) * 100));
+
+    const sceneClass = `scene-${battle.node.region}`;
+    app.innerHTML = `
+      ${topbar()}
+      <main class="battle-shell">
+        <section class="battle-stage dynamic-stage ${sceneClass}">
+          <div class="scene-sky"></div>
+          <div class="scene-fog"></div>
+          <div class="scene-bridge"></div>
+          <div class="scene-bubbles">
+            <span></span><span></span><span></span><span></span>
+          </div>
+          <div class="battle-hud hero-hud">
+            <div class="hp-line"><span style="width:${heroPct}%"></span></div>
+            <strong>${DATA.HERO.name}</strong>
+            <small>${armor.name} · ${weapon.name}</small>
+          </div>
+          <div class="battle-hud monster-hud">
+            <div class="hp-line monster"><span style="width:${monsterPct}%"></span></div>
+            <strong>${battle.monster.name}</strong>
+            <small>${battle.monster.intro}</small>
+          </div>
+          <div class="runner hero-runner" id="heroRunner" style="left:12%">
+            ${img(DATA.HERO.image, "runner-sprite hero-sprite", "哪")}
+          </div>
+          <div class="runner monster-runner" id="monsterRunner" style="left:74%">
+            ${img(battle.monster.image, "runner-sprite monster-sprite", "怪")}
+          </div>
+          <div class="battle-center">
+            <span class="battle-tag">${battle.node.name}</span>
+            <strong>${battle.node.type === "boss" ? "BOSS 战" : battle.node.type === "elite" ? "精英战" : "识字战斗"}</strong>
+            <small>连击 ${battle.combo} · 第 ${battle.turn} 回合</small>
+          </div>
+          <div class="battle-controls">
+            <button class="control-btn" data-move="-8">左移</button>
+            <button class="control-btn" data-jump="1">跳跃</button>
+            <button class="control-btn" data-move="8">右移</button>
+            <button class="control-btn action" data-action="challenge">挑战</button>
+          </div>
+        </section>
+
+        <section class="quiz-panel locked" id="quizPanel">
+          ${questionMarkup(q)}
+          <div class="option-grid">
+            ${q.options.map((option) => `<button class="answer-btn" data-answer="${option}">${option}</button>`).join("")}
+          </div>
+          <p class="battle-log" id="battleLog">${battle.log || "先靠近怪物，点挑战，读准了神兵才会发光。"}</p>
+        </section>
+        <button class="ghost-btn" data-action="map">回地图</button>
+      </main>
+    `;
+
+    sceneState = { heroX: 12, monsterX: 74, challenged: battle.sceneReady || false, jumping: false };
+    bindSceneControls();
+    app.querySelectorAll(".answer-btn").forEach((button) => {
+      button.addEventListener("click", () => {
+        if (!sceneState || !sceneState.challenged) return;
+        const result = ENGINE.answer(button.dataset.answer);
+        if (result.type === "win") renderWin(result);
+        else if (result.type === "lose") renderLose(result);
+        else {
+          animateBattleResult(result.type);
+          renderBattle();
+        }
+      });
+    });
+    $("[data-action='map']", app).addEventListener("click", renderMap);
+    bindTopbar();
+  }
+
+  function bindSceneControls() {
+    const hero = $("#heroRunner", app);
+    const monster = $("#monsterRunner", app);
+    const panel = $("#quizPanel", app);
+    const log = $("#battleLog", app);
+    if (!hero || !monster || !panel || !log) return;
+
+    const sync = () => {
+      hero.style.left = `${sceneState.heroX}%`;
+      monster.style.left = `${sceneState.monsterX}%`;
+      if (Math.abs(sceneState.heroX - sceneState.monsterX) <= 18) {
+        log.textContent = sceneState.challenged ? log.textContent : "已经靠近怪物了，点“挑战”开始识字战斗。";
+      }
+    };
+
+    app.querySelectorAll("[data-move]").forEach((button) => {
+      button.addEventListener("click", () => {
+        if (!sceneState || sceneState.challenged) return;
+        sceneState.heroX = Math.max(6, Math.min(70, sceneState.heroX + Number(button.dataset.move)));
+        sync();
+      });
+    });
+    app.querySelector("[data-jump]")?.addEventListener("click", () => {
+      if (!sceneState || sceneState.jumping) return;
+      sceneState.jumping = true;
+      hero.classList.add("jumping");
+      setTimeout(() => {
+        hero.classList.remove("jumping");
+        sceneState.jumping = false;
+      }, 620);
+    });
+    app.querySelector("[data-action='challenge']")?.addEventListener("click", () => {
+      if (!sceneState) return;
+      if (Math.abs(sceneState.heroX - sceneState.monsterX) > 18) {
+        log.textContent = "再往前一点，靠近怪物才能发起挑战。";
+        return;
+      }
+      sceneState.challenged = true;
+      battle.sceneReady = true;
+      panel.classList.remove("locked");
+      hero.classList.add("ready");
+      log.textContent = "识字挑战开始了，读对就攻击。";
+    });
+    sync();
+  }
+
+  function animateBattleResult(type) {
+    const hero = $("#heroRunner", app);
+    const monster = $("#monsterRunner", app);
+    if (type === "hit") {
+      hero && hero.classList.add("attacking");
+      monster && monster.classList.add("hurt");
+      setTimeout(() => {
+        hero && hero.classList.remove("attacking");
+        monster && monster.classList.remove("hurt");
+      }, 520);
+    }
+    if (type === "hurt") {
+      hero && hero.classList.add("hurt");
+      monster && monster.classList.add("attacking");
+      setTimeout(() => {
+        hero && hero.classList.remove("hurt");
+        monster && monster.classList.remove("attacking");
+      }, 520);
+    }
+  }
+
+  function renderWin(result) {
+    app.innerHTML = `
+      ${topbar()}
+      <section class="result-panel">
+        <p class="eyebrow">VICTORY</p>
+        <h2>${result.node.name} 闯关成功</h2>
+        <div class="rating">${stars(result.rating)}</div>
+        <p>获得 ${result.stars} 星。${result.armor ? `新盔甲「${result.armor.name}」收入装备册。` : "下一段冒险路已经打开。"}</p>
+        <button class="primary-btn" data-action="map">回地图</button>
+      </section>
+    `;
+    $("[data-action='map']", app).addEventListener("click", renderMap);
+    bindTopbar();
+  }
+
+  function renderLose(result) {
+    app.innerHTML = `
+      ${topbar()}
+      <section class="result-panel">
+        <p class="eyebrow">TRY AGAIN</p>
+        <h2>${result.node.name} 暂时撤退</h2>
+        <p>若谷侠已经恢复到半血，可以马上再挑战。星星不会丢。</p>
+        <div class="result-actions">
+          <button class="primary-btn" data-node="${result.node.id}">再挑战</button>
+          <button class="ghost-btn" data-action="map">回地图</button>
+        </div>
+      </section>
+    `;
+    $(".primary-btn", app).addEventListener("click", () => openNode(result.node.id));
+    $("[data-action='map']", app).addEventListener("click", renderMap);
+    bindTopbar();
+  }
+
+  function renderReward(result) {
+    if (!result) { renderMap(); return; }
+    const mats = Object.keys(result.reward.materials || {})
+      .map((key) => `${materialName[key]} +${result.reward.materials[key]}`)
+      .join(" · ");
+    app.innerHTML = `
+      ${topbar()}
+      <section class="result-panel">
+        <p class="eyebrow">TREASURE</p>
+        <h2>${result.node.name}</h2>
+        <p>${result.already ? "宝箱已经打开过了。" : `获得 ${result.reward.stars || 0} 星${mats ? " · " + mats : ""}`}</p>
+        ${result.armor ? `<div class="unlock-card"><strong>${result.armor.name}</strong><span>${result.armor.intro}</span></div>` : ""}
+        <button class="primary-btn" data-action="map">回地图</button>
+      </section>
+    `;
+    $("[data-action='map']", app).addEventListener("click", renderMap);
+    bindTopbar();
+  }
+
+  function renderRest(result) {
+    if (!result) { renderMap(); return; }
+    app.innerHTML = `
+      ${topbar()}
+      <section class="result-panel">
+        <p class="eyebrow">REST</p>
+        <h2>${result.node.name}</h2>
+        <p>生命从 ${result.before} 恢复到 ${result.after}。若谷侠又可以出发了。</p>
+        <button class="primary-btn" data-action="map">回地图</button>
+      </section>
+    `;
+    $("[data-action='map']", app).addEventListener("click", renderMap);
+    bindTopbar();
+  }
+
+  function renderEquipment() {
+    const save = ENGINE.state();
+    const weaponCards = ENGINE.weapons().map((weapon) => {
+      const skill = DATA.WEAPON_SKILLS[weapon.id];
+      const active = save.equippedWeapon === weapon.id ? "active" : "";
+      const art = weapon.image ? `<img src="${weapon.image}" alt="${weapon.name}">` : `<span>${weapon.mark}</span>`;
+      return `
+        <button class="equip-card ${active}" data-weapon="${weapon.id}">
+          <div class="equip-art">${art}</div>
+          <strong>${weapon.name}<span>武力 ${weapon.power}</span></strong>
+          <p>${weapon.source} · ${weapon.hero}</p>
+          <small>${skill ? skill.desc : weapon.intro}</small>
+        </button>
+      `;
+    }).join("");
+    const armorCards = DATA.ARMORS.map((armor) => {
+      const owned = save.armors.indexOf(armor.id) !== -1;
+      const active = save.equippedArmor === armor.id ? "active" : "";
+      return `
+        <button class="armor-card ${active}" data-armor="${armor.id}" ${owned ? "" : "disabled"}>
+          <strong>${armor.name}</strong>
+          <span>防御 ${armor.defense} · 生命 +${armor.hpBonus}</span>
+          <small>${owned ? armor.intro : "还没有解锁"}</small>
+        </button>
+      `;
+    }).join("");
+
+    app.innerHTML = `
+      ${topbar()}
+      <main class="equipment-shell">
+        <section>
+          <p class="eyebrow">ARMORY</p>
+          <h2>神兵出战</h2>
+          <div class="equip-grid">${weaponCards}</div>
+        </section>
+        <section>
+          <p class="eyebrow">ARMOR</p>
+          <h2>盔甲册</h2>
+          <div class="armor-grid">${armorCards}</div>
+        </section>
+        <button class="primary-btn" data-action="map">回地图</button>
+      </main>
+    `;
+
+    app.querySelectorAll("[data-weapon]").forEach((button) => {
+      button.addEventListener("click", () => {
+        ENGINE.equipWeapon(button.dataset.weapon);
+        renderEquipment();
+      });
+    });
+    app.querySelectorAll("[data-armor]:not(:disabled)").forEach((button) => {
+      button.addEventListener("click", () => {
+        ENGINE.equipArmor(button.dataset.armor);
+        renderEquipment();
+      });
+    });
+    $("[data-action='map']", app).addEventListener("click", renderMap);
+    bindTopbar();
+  }
+
+  renderMap();
+})();
+  function moveHeroToNode(id) {
+    if (movingToNode) return;
+    const node = DATA.NODES.find((item) => item.id === id);
+    const hero = $("#mapHero", app);
+    if (!node || !hero) {
+      openNode(id);
+      return;
+    }
+    movingToNode = true;
+    hero.style.left = `${node.x}%`;
+    hero.style.top = `${node.y}%`;
+    setTimeout(() => {
+      movingToNode = false;
+      openNode(id);
+    }, 900);
+  }

@@ -11,6 +11,7 @@ const PROGRESS = window.RUOGU_PROGRESS;
 const DICT = window.RUOGU_DICTATION;   // 听写手写板模块（区别于识字库数据 RUOGU_OCR）
 const WS = window.RUOGU_WEAPON_SYSTEM;
 const UI = window.RUOGU_UI;
+const DUEL = window.RUOGU_DUEL_LINK;
 
 // ===== 初始化：加载档案 + 迁移旧数据 =====
 STATE.loadProfiles();
@@ -27,6 +28,7 @@ let readingCursor = profile.readingCursor || 0;
 let readingCat = profile.readingCat || "recite";
 let readingInArticle = false;
 let dictWord = null;
+let duelExchangeFeedback = "每次兑换前会自动备份档案。";
 
 const stage = document.querySelector("#stage");
 const tabs = document.querySelectorAll(".tab");
@@ -115,6 +117,41 @@ function awardStars(amount, reason, options = {}) {
 
 function renderProgress() {
   UI.renderProgress(mode, readingInArticle, scope, words);
+  renderDuelExchange();
+}
+
+function renderDuelExchange() {
+  const box = document.querySelector("#duelExchange");
+  if (!box || !DUEL) return;
+  const info = DUEL.summary();
+  box.innerHTML = `
+    <div class="duel-exchange-head">
+      <div>
+        <p>小人对战兑换</p>
+        <strong>识字星力可以换导演时间和强力技能</strong>
+      </div>
+      <a class="duel-open-link" href="./若谷冒险游戏/index.html">打开小人对战台</a>
+    </div>
+    <div class="duel-wallet">
+      <span><strong>${info.totalStars}</strong><small>当前总星</small></span>
+      <span><strong>${DUEL.formatTime(info.playSeconds)}</strong><small>可用对战时间</small></span>
+      <span><strong>${info.rainbowTickets}</strong><small>彩虹防护罩次数</small></span>
+      <span><strong>${info.transformTickets}</strong><small>变身次数</small></span>
+    </div>
+    <div class="duel-buy-row">
+      <button class="soft-button" data-duel-buy="playTime" ${info.totalStars < info.costs.playTime ? "disabled" : ""}>50 星换 5 分钟</button>
+      <button class="soft-button" data-duel-buy="rainbow" ${info.totalStars < info.costs.rainbow ? "disabled" : ""}>20 星换防护罩</button>
+      <button class="soft-button" data-duel-buy="transform" ${info.totalStars < info.costs.transform ? "disabled" : ""}>30 星换变身</button>
+    </div>
+    <div class="duel-exchange-feedback" id="duelExchangeFeedback">${duelExchangeFeedback}<br>每局最多：彩虹罩 3 次，变身 2 次。</div>
+  `;
+  box.querySelectorAll("[data-duel-buy]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const result = DUEL.purchase(button.dataset.duelBuy);
+      duelExchangeFeedback = result.message;
+      renderProgress();
+    });
+  });
 }
 
 // ===== 认读关 =====
@@ -123,7 +160,7 @@ function renderRecognize() {
   const options = pinyinOptions(word);
   stage.innerHTML = `
     <article class="challenge recognize-card">
-      <div class="level-badge">认读关 · +1 星</div>
+      <div class="level-badge">认读关 · +2 星</div>
       <div class="big-word big-word-phrase">${word.word}</div>
       <div class="option-grid">
         ${options.map((option) => `<button class="option pinyin-option" data-pinyin="${option}">${option}</button>`).join("")}
@@ -136,10 +173,10 @@ function renderRecognize() {
     button.addEventListener("click", () => {
       if (button.dataset.pinyin === word.pinyin) {
         PROGRESS.recordReadSuccess(word.word);
-        feedback.textContent = "太棒了！+1 星，下一题来了。";
+        feedback.textContent = "太棒了！+2 星，下一题来了。";
         feedback.classList.add("glow");
         feedback.addEventListener("animationend", () => feedback.classList.remove("glow"), { once: true });
-        awardStars(1, "认读成功", { silent: true });
+        awardStars(2, "认读成功", { silent: true });
         setTimeout(() => {
           nextWord();
           renderRecognize();
