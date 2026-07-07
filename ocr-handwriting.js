@@ -29,7 +29,8 @@
     stage.innerHTML = `
       <article class="challenge dictation-card">
         <div class="level-badge">听写关 · +10 星</div>
-        <button class="target listen-target" data-action="speak">🔊 听词语</button>
+        <button class="target listen-target" data-action="speak"><img src="./assets/icons/icon_speak.png" alt="" class="speak-icon"><span>听词语</span></button>
+        <div class="dictation-pinyin py">${word.pinyin}</div>
         <canvas class="handwrite-pad${multiClass}" ${ratioStyle} width="${padW}" height="${padH}" data-cells="${n}" aria-label="手写区域"></canvas>
         <div class="ocr-status" hidden></div>
         <div class="actions three-actions">

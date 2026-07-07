@@ -974,6 +974,32 @@ h1 {
 
 .listen-target {
   background: rgba(91, 124, 181, .06);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: auto;
+  padding: 16px 24px;
+  font-size: clamp(20px, 4vw, 28px);
+  font-weight: 800;
+  border-radius: 8px;
+  color: var(--ink);
+}
+.speak-icon {
+  width: clamp(48px, 8vw, 64px);
+  height: clamp(48px, 8vw, 64px);
+  object-fit: contain;
+}
+
+.dictation-pinyin {
+  text-align: center;
+  font-family: var(--font-ui);
+  font-size: clamp(28px, 6vw, 48px);
+  color: var(--primary-deep);
+  font-weight: 700;
+  letter-spacing: 2px;
+  margin-top: -8px;
 }
 
 /* ---- Handwrite pad ---- */
@@ -2264,9 +2290,14 @@ h1 {
 
 .module-icon {
   flex: 0 0 auto;
-  font-size: 40px;
-  line-height: 1;
+  width: 52px;
+  height: 52px;
   margin-top: 2px;
+}
+.module-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .module-card-body {

@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
-    <meta name="theme-color" content="#2c4a7c" />
+    <meta name="theme-color" content="#4a5538" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -32,6 +32,13 @@
         inset: 0;
         background: rgba(26, 22, 20, .28);
       }
+      .topbar h1 { color: #f4f2ed; }
+      .topbar .back-home { color: #c9a84c; }
+      .stats span { color: #f4f2ed; }
+      .stats small { color: #b5aea0; }
+      .stats div { background: rgba(255,255,255,.10); border-color: rgba(212,208,197,.22); }
+      .stats div::before { color: #c9a84c; }
+      .profile-tool-button { color: #b5aea0; background: rgba(255,255,255,.10); border-color: rgba(212,208,197,.22); }
     </style>
   </head>
   <body>
@@ -49,15 +56,6 @@
           </div>
         </div>
         <button class="profile-tool-button" data-action="profileTools">档案</button>
-      </section>
-
-      <section class="quest-card" aria-label="游戏规则">
-        <div>
-          <p>闯关规则</p>
-          <strong>认读 +2 星，写字 +10 星，阅读 +5 星</strong>
-          <small id="unlockStatus">总星可以兑换小人对战时间和强力技能</small>
-        </div>
-        <button class="primary-button" data-action="startQuest">开始闯关</button>
       </section>
 
       <nav class="scope-bar" id="scopeBar" aria-label="出题范围">
@@ -85,8 +83,8 @@
     <script src="./grade1-words.js"></script>
     <script src="./pinyin-data.js"></script>
     <script src="./reading-texts.js"></script>
-    <script src="./words.js"></script>          <!-- 保留 RUOGU_STORIES 兼容旧阅读入口 -->
-    <script src="./weapons.js"></script>        <!-- 唯一武器数据源 -->
+    <script src="./words.js"></script>
+    <script src="./weapons.js"></script>
     <!-- 功能模块（按依赖顺序）-->
     <script src="./state-store.js"></script>
     <script src="./word-data.js"></script>
