@@ -27,12 +27,12 @@
       --ink: #22222a;
       --soft: #555966;
       --line: #d8d6ce;
-      --blue: #2c4a7c;
-      --blue-2: #5b7cb5;
+      --blue: #2f6f4e;
+      --blue-2: #5e8f68;
       --red: #d4684c;
       --gold: #d6a642;
-      --left: #2c4a7c;
-      --right: #b84a30;
+      --left: #2f6f4e;
+      --right: #6f7f3f;
       --shadow: 0 2px 14px rgba(0, 0, 0, .07);
       --deep-shadow: 0 18px 28px rgba(21, 25, 38, .18);
       font-family: "KaiTi", "STKaiti", "华文楷体", "楷体", "Noto Serif CJK SC", serif;
@@ -94,13 +94,24 @@
     .paper-btn {
       min-height: 42px;
       padding: 9px 14px;
-      border: 1px solid var(--line);
+      border: 1px solid rgba(47,111,78,.28);
       border-radius: 6px;
-      background: rgba(255,255,255,.72);
+      background: rgba(243,248,241,.86);
+      color: var(--blue);
       box-shadow: var(--shadow);
       font-weight: 900;
     }
-    .paper-btn.primary { color: #fff; background: var(--blue); border-color: transparent; }
+    .paper-btn.primary,
+    .paper-btn.active {
+      color: #fff;
+      background: var(--blue);
+      border-color: transparent;
+    }
+
+    .paper-btn:disabled {
+      opacity: .48;
+      cursor: not-allowed;
+    }
 
     .wallet-bar {
       display: grid;
@@ -266,7 +277,12 @@
     .right-panel .move-btn span:first-child { background: var(--right); }
     .move-btn small { display: none; }
     .move-btn strong { font-size: 13px; line-height: 1.1; }
-    .move-btn.defense { background: linear-gradient(180deg, #f4f8fb, #fff); }
+    .move-btn:disabled {
+      opacity: .52;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+    .move-btn.defense { background: linear-gradient(180deg, #f3f8f1, #fff); }
     .move-btn.control { background: linear-gradient(180deg, #f5fbf1, #fff); }
     .move-btn.spirit { background: linear-gradient(180deg, #f2f4fb, #fff); }
     .move-btn.ultimate {
@@ -317,7 +333,7 @@
       place-items: center;
       border-radius: 50%;
       color: #fff;
-      background: linear-gradient(180deg, var(--blue), #151f37);
+      background: linear-gradient(180deg, var(--blue), #213d2f);
       box-shadow: var(--deep-shadow);
       font-size: 26px;
       font-weight: 900;
@@ -326,9 +342,7 @@
       position: relative;
       min-height: 430px;
       overflow: hidden;
-      background:
-        radial-gradient(circle at 50% 28%, rgba(215,166,66,.28), transparent 14%),
-        linear-gradient(180deg, #dfe8ef 0%, #eef0e9 42%, #c5b28d 100%);
+      background: linear-gradient(180deg, #dde8df 0%, #eff0e8 42%, #c5b28d 100%);
     }
     .stage-bg {
       position: absolute;
@@ -345,35 +359,12 @@
       position: absolute;
       inset: 0;
       background:
-        linear-gradient(90deg, rgba(44,74,124,.08), transparent 18%, transparent 82%, rgba(212,104,76,.1)),
+        linear-gradient(90deg, rgba(47,111,78,.1), transparent 18%, transparent 82%, rgba(212,104,76,.1)),
         repeating-linear-gradient(90deg, rgba(255,255,255,.16) 0 1px, transparent 1px 84px);
       pointer-events: none;
     }
-    .moon {
-      position: absolute;
-      top: 34px;
-      left: 50%;
-      width: 118px;
-      height: 118px;
-      transform: translateX(-50%);
-      border-radius: 50%;
-      background: radial-gradient(circle at 35% 32%, #fff8d8, #d7a642);
-      opacity: .6;
-      filter: blur(.2px);
-    }
-    .cloud, .cloud::before, .cloud::after {
-      position: absolute;
-      width: 148px;
-      height: 34px;
-      border-radius: 999px;
-      background: rgba(255,255,255,.44);
-      filter: blur(.4px);
-    }
-    .cloud { left: 10%; top: 76px; animation: cloudDrift 14s ease-in-out infinite alternate; }
-    .cloud::before { content: ""; left: 46px; top: -18px; width: 72px; height: 52px; }
-    .cloud::after { content: ""; left: 88px; top: 0; width: 92px; height: 38px; }
-    .cloud.c2 { left: auto; right: 12%; top: 122px; transform: scale(.78); animation-duration: 18s; }
     .ground {
+      display: none;
       position: absolute;
       left: -4%;
       right: -4%;
@@ -466,8 +457,8 @@
       width: 58px;
       height: 58px;
       color: #fff;
-      background: rgba(44,74,124,.72);
-      box-shadow: 0 0 20px rgba(44,74,124,.35);
+      background: rgba(47,111,78,.72);
+      box-shadow: 0 0 20px rgba(47,111,78,.35);
     }
     .fighter.boss-mode::after {
       content: "BOSS";
@@ -588,7 +579,7 @@
     .fx-beetle::before { content: "金甲虫"; color: #a87811; font-size: 28px; }
     .fx-magnet::before { content: "吸铁石"; color: #284668; font-size: 28px; }
     .fx-pants::before { content: "黄金内裤"; color: #9b6d16; font-size: 26px; }
-    .fx-flyer::before { content: "黄金飞行器"; color: #2c4a7c; font-size: 26px; }
+    .fx-flyer::before { content: "黄金飞行器"; color: var(--blue); font-size: 26px; }
     .fx-rainbow {
       width: 170px;
       height: 170px;
@@ -647,7 +638,7 @@
       padding: 18px;
       z-index: 20;
       color: #fff;
-      background: linear-gradient(180deg, rgba(44,74,124,.96), rgba(23,31,52,.96));
+      background: linear-gradient(180deg, rgba(47,111,78,.96), rgba(32,54,42,.96));
       border-radius: 6px;
       box-shadow: var(--deep-shadow);
     }
@@ -682,7 +673,6 @@
     }
 
     @keyframes idle { 0%,100%{translate:0 0} 50%{translate:0 -5px} }
-    @keyframes cloudDrift { from{translate:-14px 0} to{translate:14px 0} }
     @keyframes leftCharge { 0%{translate:0 0} 46%{translate:210px 0; scale:1.05} 100%{translate:0 0} }
     @keyframes rightCharge { 0%{translate:0 0} 46%{translate:-210px 0; scale:1.05} 100%{translate:0 0} }
     @keyframes smash { 0%{translate:0 0; rotate:0} 36%{translate:0 -44px; rotate:-10deg} 58%{translate:28px 10px; rotate:8deg} 100%{translate:0 0; rotate:0} }
@@ -761,6 +751,7 @@
         <h1>若谷小人对战台</h1>
       </div>
       <div class="top-actions">
+        <button class="paper-btn" id="computerBtn" aria-pressed="false">电脑对战：关</button>
         <button class="paper-btn" id="swapBtn">左右换人</button>
         <button class="paper-btn" id="randomBtn">随机开战</button>
         <button class="paper-btn primary" id="resetBtn">重新开始</button>
@@ -820,9 +811,6 @@
 
         <div class="stage" id="stage">
           <div class="stage-bg" id="stageBg"></div>
-          <div class="moon"></div>
-          <div class="cloud"></div>
-          <div class="cloud c2"></div>
           <div class="arena-line"></div>
           <div class="ground"></div>
           <div class="fighter left idle" id="leftFighter">
@@ -933,7 +921,10 @@
       round: 1,
       rainbowUsed: 0,
       transformUsed: 0,
-      timeTimer: null
+      timeTimer: null,
+      computerMode: false,
+      aiTimer: null,
+      lastHumanMove: ""
     };
 
     const $ = (id) => document.getElementById(id);
@@ -972,6 +963,7 @@
       $("resetBtn").addEventListener("click", resetFight);
       $("randomBtn").addEventListener("click", randomFight);
       $("swapBtn").addEventListener("click", swapSides);
+      $("computerBtn").addEventListener("click", toggleComputerMode);
       document.querySelectorAll("[data-buy]").forEach((button) => {
         button.addEventListener("click", () => {
           if (!DUEL) return;
@@ -1026,6 +1018,11 @@
       state.timeTimer = null;
     }
 
+    function clearAiTimer() {
+      if (state.aiTimer) clearTimeout(state.aiTimer);
+      state.aiTimer = null;
+    }
+
     function setCharacter(side, id) {
       state[side].character = id;
       const c = charById(id);
@@ -1050,7 +1047,7 @@
     function renderMoves(side) {
       const box = $(`${side}Moves`);
       box.innerHTML = moves.map((move) => `
-        <button class="move-btn ${move.ultimate ? "ultimate" : ""} ${move.kind || ""}" data-side="${side}" data-move="${move.id}">
+        <button class="move-btn ${move.ultimate ? "ultimate" : ""} ${move.kind || ""}" data-side="${side}" data-move="${move.id}" ${side === "right" && state.computerMode ? "disabled" : ""}>
           <span>${move.icon}</span>
           <strong>${move.name}</strong>
           <small>${move.desc}</small>
@@ -1116,6 +1113,109 @@
       });
     }
 
+    function toggleComputerMode() {
+      state.computerMode = !state.computerMode;
+      clearAiTimer();
+      updateComputerButton();
+      renderMoves("right");
+      $("directorLine").textContent = state.computerMode
+        ? "电脑控制右手。它会自己找机会出招，你用左手应战。"
+        : "双手导演模式：左手右手都可以自己点。";
+      log(state.computerMode ? "电脑对战开启，右手交给电脑。" : "电脑对战关闭，回到双手导演。");
+      if (state.computerMode) scheduleComputerMove();
+    }
+
+    function updateComputerButton() {
+      const button = $("computerBtn");
+      button.textContent = state.computerMode ? "电脑对战：开" : "电脑对战：关";
+      button.classList.toggle("active", state.computerMode);
+      button.setAttribute("aria-pressed", String(state.computerMode));
+    }
+
+    function moveById(id) {
+      return moves.find((m) => m.id === id) || moves[0];
+    }
+
+    function canComputerUse(move) {
+      return !move.shield && !move.transform;
+    }
+
+    function weightedPick(list) {
+      const total = list.reduce((sum, item) => sum + item.weight, 0);
+      let roll = Math.random() * total;
+      for (const item of list) {
+        roll -= item.weight;
+        if (roll <= 0) return item.id;
+      }
+      return list[list.length - 1].id;
+    }
+
+    function chooseComputerMove() {
+      const ai = state.right;
+      const player = state.left;
+      const hpRate = ai.hp / ai.maxHp;
+      const playerHpRate = player.hp / player.maxHp;
+      const last = moveById(state.lastHumanMove || "arrow");
+      const attacks = moves.filter((move) => move.damage > 0 && canComputerUse(move));
+      const finish = attacks
+        .filter((move) => move.damage >= player.hp)
+        .sort((a, b) => a.damage - b.damage)[0];
+      if (finish && Math.random() < 0.72) return finish.id;
+
+      if (hpRate < 0.38 && !ai.evade && Math.random() < 0.42) {
+        return last.attackType === "high" ? "crouch" : "jump";
+      }
+
+      if (player.shield === "rainbow" && Math.random() < 0.55) return "magnet";
+      if (!player.disarmed && Math.random() < 0.12) return "magnet";
+      if (player.evade === "ground" && Math.random() < 0.7) return weightedPick([
+        { id: "arrow", weight: 3 },
+        { id: "gold-pants", weight: 4 },
+        { id: "flyer", weight: 5 }
+      ]);
+      if (player.evade === "high" && Math.random() < 0.7) return weightedPick([
+        { id: "snake", weight: 3 },
+        { id: "leopard", weight: 4 },
+        { id: "beetle", weight: 4 },
+        { id: "combo-kick", weight: 3 }
+      ]);
+
+      if (playerHpRate < 0.42 && Math.random() < 0.35) {
+        return weightedPick([
+          { id: "combo-kick", weight: 4 },
+          { id: "flyer", weight: 3 },
+          { id: "beetle", weight: 3 },
+          { id: "leopard", weight: 2 }
+        ]);
+      }
+
+      return weightedPick([
+        { id: "arrow", weight: 4 },
+        { id: "snake", weight: 4 },
+        { id: "leopard", weight: 5 },
+        { id: "beetle", weight: 5 },
+        { id: "combo-kick", weight: 3 },
+        { id: "gold-pants", weight: 2 },
+        { id: "flyer", weight: 2 },
+        { id: "jump", weight: hpRate < 0.55 ? 2 : 1 },
+        { id: "crouch", weight: hpRate < 0.55 ? 2 : 1 }
+      ]);
+    }
+
+    function scheduleComputerMove() {
+      clearAiTimer();
+      if (!state.computerMode || state.left.hp <= 0 || state.right.hp <= 0) return;
+      const delay = 450 + Math.floor(Math.random() * 450);
+      state.aiTimer = setTimeout(() => {
+        if (!state.computerMode || state.left.hp <= 0 || state.right.hp <= 0) return;
+        if (state.locked) {
+          scheduleComputerMove();
+          return;
+        }
+        doMove("right", chooseComputerMove());
+      }, delay);
+    }
+
     function doMove(side, moveId) {
       if (state.locked || state.left.hp <= 0 || state.right.hp <= 0) return;
       if (!hasPlayTime()) {
@@ -1161,6 +1261,8 @@
       }
 
       state.locked = true;
+      clearAiTimer();
+      if (side === "left") state.lastHumanMove = move.id;
       startPlayTimer();
       playSfx(move.id);
       const actor = $(`${side}Fighter`);
@@ -1214,7 +1316,10 @@
         } else {
           state.locked = false;
           state.round += 1;
-          $("directorLine").textContent = "继续演！左手右手都可以马上出招。";
+          $("directorLine").textContent = state.computerMode
+            ? (side === "left" ? "电脑正在看招，马上反击。" : "电脑还在盯着你，左手快应战。")
+            : "继续演！左手右手都可以马上出招。";
+          if (state.computerMode) scheduleComputerMove();
         }
       }, move.ultimate ? 1040 : 820);
     }
@@ -1291,6 +1396,7 @@
 
     function win(side) {
       state.locked = true;
+      clearAiTimer();
       stopPlayTimer();
       const winner = charById(state[side].character);
       const loserSide = side === "left" ? "right" : "left";
@@ -1311,6 +1417,7 @@
     }
 
     function resetFight(announce = true) {
+      clearAiTimer();
       stopPlayTimer();
       ["left", "right"].forEach((side) => {
         clearSideTimers(side);
@@ -1329,8 +1436,12 @@
       hideWinner();
       render();
       renderWallet();
+      updateComputerButton();
       if (announce) log("重新开始，小人站好了。");
-      $("directorLine").textContent = "左手先出招，右手也可以连着演。";
+      $("directorLine").textContent = state.computerMode
+        ? "电脑对战已准备好。右手电脑会自己出招。"
+        : "左手先出招，右手也可以连着演。";
+      if (state.computerMode) scheduleComputerMove();
     }
 
     function randomFight() {
