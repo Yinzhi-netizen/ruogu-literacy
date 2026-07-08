@@ -92,7 +92,9 @@
         z-index: -1;
       }
       .realm-gate .name {
-        font-size: clamp(26px, 4.5vw, 46px);
+        position: relative;
+        z-index: 2;
+        font-size: clamp(28px, 5vw, 50px);
         letter-spacing: 6px;
         color: #fff8e7;
         text-shadow:
@@ -100,6 +102,17 @@
           0 0 24px rgba(255, 200, 90, 0.65),
           0 0 46px rgba(255, 170, 60, 0.4),
           0 2px 12px rgba(0,0,0,0.55);
+      }
+      /* 漂浮的石阶台基，字站在台面上，与字一同漂浮 */
+      .realm-gate .pedestal {
+        position: relative;
+        z-index: 1;
+        display: block;
+        width: clamp(150px, 30vw, 200px);
+        height: auto;
+        margin: -0.62em auto 0;
+        filter: drop-shadow(0 12px 26px rgba(0, 0, 0, 0.45));
+        pointer-events: none;
       }
       .realm-gate .hint {
         margin-top: 8px;
@@ -117,18 +130,34 @@
         transform: translateY(0);
       }
 
-      /* 未开启星域占位 */
+      /* 未开启星域占位：文字 + 同款小台阶 */
       .locked-star {
         position: absolute;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        transform: translateX(-50%);
+        text-align: center;
+        pointer-events: none;
+        animation: float 3.6s ease-in-out infinite;
+      }
+      .locked-star .lock-name {
         font-size: clamp(13px, 1.9vw, 18px);
         color: rgba(240, 228, 198, 0.42);
         letter-spacing: 2px;
         text-shadow: 0 1px 6px rgba(0,0,0,0.5);
-        pointer-events: none;
       }
-      .locked-star.s1 { bottom: 38%; left: 56%; }
-      .locked-star.s2 { bottom: 52%; left: 44%; }
-      .locked-star.s3 { bottom: 66%; left: 60%; }
+      .locked-star .lock-step {
+        display: block;
+        width: clamp(96px, 19vw, 132px);
+        height: auto;
+        margin-top: -0.5em;
+        opacity: 0.72;
+        filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.4));
+      }
+      .locked-star.s1 { bottom: 40%; left: 58%; animation-delay: 0.6s; }
+      .locked-star.s2 { bottom: 55%; left: 42%; animation-delay: 1.4s; }
+      .locked-star.s3 { bottom: 69%; left: 61%; animation-delay: 2.1s; }
 
       @keyframes float {
         0%, 100% { transform: translate(-50%, 0); }
@@ -151,12 +180,22 @@
       <a class="realm-gate" href="./home.html" aria-label="进入拾字谷">
         <span class="halo"></span>
         <div class="name">拾字谷</div>
+        <img class="pedestal" src="./assets/backgrounds/pedestal_shizigu.png" alt="" />
         <div class="hint">点击进入</div>
       </a>
 
-      <span class="locked-star s1">星域 · 待开启</span>
-      <span class="locked-star s2">星域 · 待开启</span>
-      <span class="locked-star s3">星域 · 待开启</span>
+      <span class="locked-star s1">
+        <span class="lock-name">星域 · 待开启</span>
+        <img class="lock-step" src="./assets/backgrounds/pedestal_shizigu.png" alt="" />
+      </span>
+      <span class="locked-star s2">
+        <span class="lock-name">星域 · 待开启</span>
+        <img class="lock-step" src="./assets/backgrounds/pedestal_shizigu.png" alt="" />
+      </span>
+      <span class="locked-star s3">
+        <span class="lock-name">星域 · 待开启</span>
+        <img class="lock-step" src="./assets/backgrounds/pedestal_shizigu.png" alt="" />
+      </span>
     </main>
   </body>
 </html>
