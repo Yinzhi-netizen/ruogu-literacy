@@ -107,6 +107,12 @@
       background: var(--blue);
       border-color: transparent;
     }
+    .paper-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+    }
 
     .paper-btn:disabled {
       opacity: .48;
@@ -394,13 +400,14 @@
       z-index: 4;
     }
     .fighter.left { left: 15%; }
-    .fighter.right { right: 15%; transform: scaleX(-1); }
-    .fighter img {
+    .fighter.right { right: 15%; }
+    .fighter .fighter-sprite {
       width: 164px;
       height: 164px;
       object-fit: contain;
       filter: drop-shadow(0 20px 16px rgba(0,0,0,.2));
     }
+    .fighter.right .fighter-sprite { transform: scaleX(-1); }
     .fighter.idle { animation: idle 1.4s ease-in-out infinite; }
     .fighter.charge-left { animation: leftCharge .58s ease; }
     .fighter.charge-right { animation: rightCharge .58s ease; }
@@ -425,7 +432,8 @@
     .fighter.flyer { animation: skyDive .92s ease; filter: drop-shadow(0 0 26px rgba(91,124,181,.66)); }
     .fighter.rainbow { filter: drop-shadow(0 0 26px rgba(91,124,181,.74)); }
     .fighter.boss-strike { animation: bossStrike 1.05s ease; filter: drop-shadow(0 0 36px rgba(184,74,48,.82)); }
-    .fighter.boss-mode img { transform: scale(1.28); filter: drop-shadow(0 26px 20px rgba(0,0,0,.26)) drop-shadow(0 0 24px rgba(184,74,48,.5)); }
+    .fighter.boss-mode .fighter-sprite { transform: scale(1.28); filter: drop-shadow(0 26px 20px rgba(0,0,0,.26)) drop-shadow(0 0 24px rgba(184,74,48,.5)); }
+    .fighter.right.boss-mode .fighter-sprite { transform: scaleX(-1) scale(1.28); }
     .fighter.shielded::after,
     .fighter.evading::after,
     .fighter.boss-mode::after {
@@ -488,26 +496,28 @@
     .fighter.attacking .weapon-aura { animation: auraFlash .55s ease; }
     .weapon-ghost {
       position: absolute;
-      width: 140px;
-      height: 140px;
-      right: -24px;
-      top: 28px;
+      width: var(--weapon-size, 140px);
+      height: var(--weapon-size, 140px);
+      left: var(--weapon-x, 78%);
+      top: var(--weapon-y, 48%);
       object-fit: contain;
       opacity: .95;
-      transform: rotate(-18deg);
-      transform-origin: 20% 80%;
+      transform: translate(-50%, -50%) rotate(var(--weapon-rotate, -18deg));
+      transform-origin: var(--weapon-origin-x, 25%) var(--weapon-origin-y, 75%);
       filter: drop-shadow(0 6px 6px rgba(0,0,0,.32));
       pointer-events: none;
-      z-index: 3;
+      z-index: var(--weapon-z, 3);
     }
-    .fighter.right .weapon-ghost {
-      right: auto;
-      left: -24px;
-      transform: rotate(18deg);
-      transform-origin: 80% 80%;
+    .weapon-halo,
+    .weapon-stamp,
+    .weapon-cover {
+      filter: drop-shadow(0 8px 10px rgba(0,0,0,.22)) drop-shadow(0 0 16px rgba(215,166,66,.36));
     }
-    .fighter.disarmed .weapon-ghost { opacity: 0; transform: translateY(-48px) scale(.25) rotate(-18deg); }
-    .fighter.right.disarmed .weapon-ghost { transform: translateY(-48px) scale(.25) rotate(18deg); }
+    .weapon-halo { animation: weaponFloat 1.8s ease-in-out infinite; }
+    .fighter.disarmed .weapon-ghost {
+      opacity: 0;
+      transform: translate(-50%, -50%) translateY(-48px) scale(.25) rotate(var(--weapon-rotate, -18deg));
+    }
     .impact {
       position: absolute;
       left: 50%;
@@ -738,14 +748,20 @@
       .scoreboard { grid-template-columns: 1fr; }
       .vs-seal { width: 54px; height: 54px; justify-self: center; }
       .fighter { width: 124px; height: 140px; bottom: 88px; }
-      .fighter img { width: 124px; height: 124px; }
+      .fighter .fighter-sprite { width: 124px; height: 124px; }
       .fighter.left { left: 8%; }
       .fighter.right { right: 8%; }
       .moves { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-      .weapon-ghost { width: 100px; height: 100px; right: -18px; top: 22px; }
-      .fighter.right .weapon-ghost { left: -18px; }
+      .weapon-ghost {
+        width: calc(var(--weapon-size, 140px) * .76);
+        height: calc(var(--weapon-size, 140px) * .76);
+      }
       @keyframes leftCharge { 0%{translate:0 0} 46%{translate:110px 0; scale:1.05} 100%{translate:0 0} }
       @keyframes rightCharge { 0%{translate:0 0} 46%{translate:-110px 0; scale:1.05} 100%{translate:0 0} }
+    }
+    @keyframes weaponFloat {
+      0%,100% { translate: 0 0; }
+      50% { translate: 0 -7px; }
     }
   </style>
 </head>
@@ -758,6 +774,7 @@
         <h1>若谷小人对战台</h1>
       </div>
       <div class="top-actions">
+        <a class="paper-btn paper-link" href="../index.html">返回星河书旅</a>
         <button class="paper-btn" id="computerBtn" aria-pressed="false">电脑对战：关</button>
         <button class="paper-btn" id="swapBtn">左右换人</button>
         <button class="paper-btn" id="randomBtn">随机开战</button>
@@ -823,12 +840,12 @@
           <div class="fighter left idle" id="leftFighter">
             <span class="weapon-aura"></span>
             <img id="leftWeaponGhost" class="weapon-ghost" alt="" />
-            <img id="leftSprite" alt="左手小人" />
+            <img id="leftSprite" class="fighter-sprite" alt="左手小人" />
           </div>
           <div class="fighter right idle" id="rightFighter">
             <span class="weapon-aura"></span>
             <img id="rightWeaponGhost" class="weapon-ghost" alt="" />
-            <img id="rightSprite" alt="右手小人" />
+            <img id="rightSprite" class="fighter-sprite" alt="右手小人" />
           </div>
           <div class="impact" id="impact"></div>
           <div class="damage" id="damageText"></div>
@@ -910,6 +927,97 @@
     const fallbackWeapons = [
       { id: "fist", name: "小拳头", mark: "拳", power: 45, image: "", hero: "若谷侠", source: "若谷小人" }
     ];
+
+    const weaponPoseTypes = {
+      staff: new Set([
+        "jingubang", "jiuchidingpa", "jiangyaobaozhang", "qinglongyanyuedao",
+        "zhangbashemao", "fangtianhuaji", "huojianqiang", "shuimochanzhang",
+        "goulianqiang", "dagoubang"
+      ]),
+      blade: new Set([
+        "sanjianliangrendao", "qinggangjian", "qixingbaodao", "xuehuabingtiejiedao",
+        "xuantiezhongjian", "tulongdao", "yitianjian", "jinshejian"
+      ]),
+      heavy: new Set(["shuangbanfu", "langyabang"]),
+      fan: new Set(["bajiaoshan"]),
+      whip: new Set(["dashenbian"])
+    };
+
+    const specialWeaponPoses = {
+      qiankunquan: {
+        type: "halo",
+        size: 92,
+        z: 6,
+        left: { x: "50%", y: "6%", rotate: 0, origin: "50% 50%" },
+        right: { x: "50%", y: "6%", rotate: 0, origin: "50% 50%" }
+      },
+      fantianyin: {
+        type: "stamp",
+        size: 104,
+        z: 6,
+        left: { x: "50%", y: "0%", rotate: -4, origin: "50% 50%" },
+        right: { x: "50%", y: "0%", rotate: 4, origin: "50% 50%" }
+      },
+      jiulongshenhuozhao: {
+        type: "cover",
+        size: 118,
+        z: 6,
+        left: { x: "50%", y: "15%", rotate: -2, origin: "50% 50%" },
+        right: { x: "50%", y: "15%", rotate: 2, origin: "50% 50%" }
+      }
+    };
+
+    const defaultWeaponPoses = {
+      staff: {
+        type: "staff",
+        size: 154,
+        z: 4,
+        left: { x: "79%", y: "50%", rotate: -18, origin: "24% 76%" },
+        right: { x: "21%", y: "50%", rotate: 18, origin: "76% 76%" }
+      },
+      blade: {
+        type: "blade",
+        size: 132,
+        z: 4,
+        left: { x: "76%", y: "48%", rotate: -28, origin: "28% 78%" },
+        right: { x: "24%", y: "48%", rotate: 28, origin: "72% 78%" }
+      },
+      heavy: {
+        type: "heavy",
+        size: 132,
+        z: 4,
+        left: { x: "72%", y: "40%", rotate: -36, origin: "34% 82%" },
+        right: { x: "28%", y: "40%", rotate: 36, origin: "66% 82%" }
+      },
+      fan: {
+        type: "fan",
+        size: 118,
+        z: 4,
+        left: { x: "78%", y: "49%", rotate: -10, origin: "28% 74%" },
+        right: { x: "22%", y: "49%", rotate: 10, origin: "72% 74%" }
+      },
+      whip: {
+        type: "whip",
+        size: 138,
+        z: 4,
+        left: { x: "77%", y: "47%", rotate: -22, origin: "24% 78%" },
+        right: { x: "23%", y: "47%", rotate: 22, origin: "76% 78%" }
+      },
+      hand: {
+        type: "hand",
+        size: 136,
+        z: 4,
+        left: { x: "78%", y: "48%", rotate: -18, origin: "25% 75%" },
+        right: { x: "22%", y: "48%", rotate: 18, origin: "75% 75%" }
+      }
+    };
+
+    function weaponPoseForId(id) {
+      if (specialWeaponPoses[id]) return specialWeaponPoses[id];
+      const type = Object.keys(weaponPoseTypes).find((key) => weaponPoseTypes[key].has(id)) || "hand";
+      return defaultWeaponPoses[type];
+    }
+
     const weapons = (window.RUOGU_WEAPONS && window.RUOGU_WEAPONS.length ? window.RUOGU_WEAPONS : fallbackWeapons)
       .map((w, index) => ({
         id: w.id || `weapon-${index}`,
@@ -918,7 +1026,8 @@
         power: Number(w.power || 50),
         hero: w.hero || "若谷侠",
         source: w.source || "若谷神兵库",
-        image: w.image ? "../" + w.image.replace(/^\.\//, "") : ""
+        image: w.image ? "../" + w.image.replace(/^\.\//, "") : "",
+        duelPose: w.duelPose || weaponPoseForId(w.id)
       }));
 
     const state = {
@@ -1094,6 +1203,25 @@
         : weapon.image.replace("_r.png", "_l.png");
     }
 
+    function cssUnit(value) {
+      return typeof value === "number" ? `${value}px` : value;
+    }
+
+    function applyWeaponPose(side, weapon) {
+      const ghost = $(`${side}WeaponGhost`);
+      const pose = weapon.duelPose || defaultWeaponPoses.hand;
+      const sidePose = pose[side] || pose.left || defaultWeaponPoses.hand[side];
+      const [originX = "50%", originY = "50%"] = String(sidePose.origin || "50% 50%").split(/\s+/);
+      ghost.className = `weapon-ghost weapon-${pose.type || "hand"}`;
+      ghost.style.setProperty("--weapon-size", cssUnit(sidePose.size || pose.size || 136));
+      ghost.style.setProperty("--weapon-x", cssUnit(sidePose.x || "50%"));
+      ghost.style.setProperty("--weapon-y", cssUnit(sidePose.y || "50%"));
+      ghost.style.setProperty("--weapon-rotate", `${sidePose.rotate || 0}deg`);
+      ghost.style.setProperty("--weapon-origin-x", originX);
+      ghost.style.setProperty("--weapon-origin-y", originY);
+      ghost.style.setProperty("--weapon-z", sidePose.z || pose.z || 4);
+    }
+
     function renderStage() {
       const leftChar = charById(state.left.character);
       const rightChar = charById(state.right.character);
@@ -1103,6 +1231,8 @@
       $("rightSprite").src = CUTOUT + rightChar.file;
       $("leftWeaponGhost").src = weaponImageForSide(leftWeapon, "left");
       $("rightWeaponGhost").src = weaponImageForSide(rightWeapon, "right");
+      applyWeaponPose("left", leftWeapon);
+      applyWeaponPose("right", rightWeapon);
       $("leftWeaponGhost").style.display = leftWeapon.image && !state.left.disarmed ? "block" : "none";
       $("rightWeaponGhost").style.display = rightWeapon.image && !state.right.disarmed ? "block" : "none";
       $("leftName").textContent = leftChar.name;
