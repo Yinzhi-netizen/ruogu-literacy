@@ -1,4 +1,4 @@
-const cacheName = "ruogu-literacy-v24";
+const cacheName = "ruogu-literacy-v25";
 const assets = [
   "./",
   "./index.html",
@@ -22,13 +22,25 @@ const assets = [
   "./ui-common.js",
   "./duel-link.js",
   "./app.js",
+  "./若谷冒险游戏/index.html",
   "./manifest.webmanifest",
   "./icons/icon-180.png",
   "./icons/icon-192.svg",
   "./icons/icon-512.svg",
   "./assets/backgrounds/07_reading_galaxy_map_mobile.jpg",
   "./assets/backgrounds/06_cloud_characters_mobile.jpg",
-  "./assets/backgrounds/05_scholar_mountain_mobile.jpg"
+  "./assets/backgrounds/05_scholar_mountain_mobile.jpg",
+  "./assets/backgrounds/01_fengshen_cloud.jpg",
+  "./assets/backgrounds/02_fire_mountain.jpg",
+  "./assets/backgrounds/03_star_moon.jpg",
+  "./assets/backgrounds/04_dragon_palace.jpg",
+  "./assets/backgrounds/06_cloud_characters.jpg",
+  "./assets/backgrounds/08_翠竹幽林.jpg",
+  "./assets/backgrounds/09_碧海潮生.jpg",
+  "./assets/backgrounds/10_冰封雪原.jpg",
+  "./assets/backgrounds/11_桃源花谷.jpg",
+  "./assets/backgrounds/12_雷霆深渊.jpg",
+  "./assets/backgrounds/13_云端仙境.jpg"
 ];
 
 self.addEventListener("install", (event) => {

@@ -10,7 +10,7 @@
       position: fixed;
       inset: 0;
       z-index: -1;
-      background-image: url("../assets/backgrounds/06_cloud_characters.png");
+      background-image: url("../assets/backgrounds/06_cloud_characters.jpg");
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
@@ -299,7 +299,7 @@
 
     .stage-shell {
       display: grid;
-      grid-template-rows: auto 1fr auto;
+      grid-template-rows: auto auto minmax(0, 1fr) auto;
       min-height: 560px;
       overflow: hidden;
     }
@@ -343,6 +343,71 @@
       font-size: 26px;
       font-weight: 900;
     }
+    .scene-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      min-height: 30px;
+      padding: 3px 8px;
+      border-bottom: 1px solid var(--line);
+      background:
+        linear-gradient(90deg, rgba(47,111,78,.12), rgba(247,246,242,.82) 34%, rgba(214,166,66,.10)),
+        rgba(247,246,242,.72);
+      color: var(--soft);
+      font-weight: 900;
+    }
+    .scene-current {
+      min-width: 0;
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      color: var(--blue);
+    }
+    .scene-current span {
+      color: var(--soft);
+      font-size: 11px;
+      letter-spacing: 1px;
+    }
+    .scene-current strong {
+      font-size: 15px;
+      color: var(--ink);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .scene-picker {
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      min-height: 24px;
+      padding: 2px 4px 2px 10px;
+      border: 1px solid rgba(47,111,78,.22);
+      border-radius: 999px;
+      background: rgba(255,255,255,.72);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.7);
+      color: var(--blue);
+      font-size: 12px;
+    }
+    .scene-select {
+      min-width: 104px;
+      max-width: 150px;
+      height: 22px;
+      padding: 2px 8px;
+      border: 0;
+      border-radius: 999px;
+      background: var(--blue);
+      font: inherit;
+      font-weight: 900;
+      text-align: center;
+      text-align-last: center;
+      color: #fff;
+      cursor: pointer;
+      outline: none;
+    }
+    .scene-select option { color: var(--ink); background: #fff; }
+
     .stage {
       position: relative;
       min-height: 430px;
@@ -744,6 +809,10 @@
       .wallet-bar { grid-template-columns: 1fr; }
       .wallet-actions { justify-content: stretch; }
       .wallet-actions .paper-btn { flex: 1 1 120px; }
+      .scene-bar { align-items: stretch; flex-direction: column; gap: 8px; }
+      .scene-current { justify-content: space-between; }
+      .scene-picker { justify-content: space-between; width: 100%; }
+      .scene-select { flex: 1; max-width: none; }
       .stage { min-height: 390px; }
       .scoreboard { grid-template-columns: 1fr; }
       .vs-seal { width: 54px; height: 54px; justify-self: center; }
@@ -833,6 +902,17 @@
           </div>
         </div>
 
+        <div class="scene-bar" aria-label="对战场景选择">
+          <div class="scene-current">
+            <span>对战场景</span>
+            <strong id="sceneName">封神云</strong>
+          </div>
+          <label class="scene-picker" for="sceneSelect">
+            <span>切换</span>
+            <select id="sceneSelect" class="scene-select"></select>
+          </label>
+        </div>
+
         <div class="stage" id="stage">
           <div class="stage-bg" id="stageBg"></div>
           <div class="arena-line"></div>
@@ -900,14 +980,20 @@
       { id: "redking", name: "红怪王", file: "10_cutout.png", hp: 136, power: 12 }
     ];
 
-    const BACKGROUNDS = {
-      hero: "../assets/backgrounds/01_fengshen_cloud.png",
-      vine: "../assets/backgrounds/04_dragon_palace.png",
-      square: "../assets/backgrounds/03_star_moon.png",
-      dot: "../assets/backgrounds/04_dragon_palace.png",
-      echo: "../assets/backgrounds/03_star_moon.png",
-      redking: "../assets/backgrounds/02_fire_mountain.png"
-    };
+    const SCENES = [
+      { id: "fengshen",  name: "封神云",   bg: "../assets/backgrounds/01_fengshen_cloud.jpg" },
+      { id: "fire",     name: "火焰山",   bg: "../assets/backgrounds/02_fire_mountain.jpg" },
+      { id: "star",     name: "星月",     bg: "../assets/backgrounds/03_star_moon.jpg" },
+      { id: "dragon",   name: "龙宫",     bg: "../assets/backgrounds/04_dragon_palace.jpg" },
+      { id: "bamboo",   name: "翠竹幽林", bg: "../assets/backgrounds/08_翠竹幽林.jpg" },
+      { id: "ocean",    name: "碧海潮生", bg: "../assets/backgrounds/09_碧海潮生.jpg" },
+      { id: "ice",      name: "冰封雪原", bg: "../assets/backgrounds/10_冰封雪原.jpg" },
+      { id: "peach",    name: "桃源花谷", bg: "../assets/backgrounds/11_桃源花谷.jpg" },
+      { id: "thunder",  name: "雷霆深渊", bg: "../assets/backgrounds/12_雷霆深渊.jpg" },
+      { id: "cloud",    name: "云端仙境", bg: "../assets/backgrounds/13_云端仙境.jpg" }
+    ];
+
+    let currentScene = SCENES[0];
 
     const moves = [
       { id: "jump", icon: "跳", name: "跳", desc: "跳起来躲下一次地面攻击", damage: 0, cls: "jump", evade: "ground", kind: "defense" },
@@ -1067,6 +1153,17 @@
     }
 
     function mount() {
+      // Populate scene selector
+      const sceneSelect = $("sceneSelect");
+      sceneSelect.innerHTML = SCENES.map(s => `<option value="${s.id}">${s.name}</option>`).join("");
+      sceneSelect.value = currentScene.id;
+      $("sceneName").textContent = currentScene.name;
+      sceneSelect.addEventListener("change", () => {
+        currentScene = SCENES.find(s => s.id === sceneSelect.value) || SCENES[0];
+        $("sceneName").textContent = currentScene.name;
+        updateStageBackground();
+      });
+
       setupSelect($("leftCharacter"), characters, state.left.character);
       setupSelect($("rightCharacter"), characters, state.right.character);
       setupSelect($("leftWeapon"), weapons, state.left.weapon);
@@ -1092,7 +1189,7 @@
       renderMoves("right");
       renderWallet();
       resetFight(false);
-      updateStageBackground(state.left.character);
+      updateStageBackground();
     }
 
     function renderWallet() {
@@ -1146,12 +1243,11 @@
       state[side].hp = c.hp;
       hideWinner();
       render();
-      updateStageBackground(id);
     }
 
-    function updateStageBackground(characterId) {
+    function updateStageBackground() {
       const bg = $("stageBg");
-      const url = BACKGROUNDS[characterId];
+      const url = currentScene.bg;
       if (!bg || !url) return;
       bg.classList.remove("show");
       setTimeout(() => {
@@ -1600,7 +1696,7 @@
       $("rightWeapon").value = state.right.weapon;
       resetFight(false);
       log("随机换好人和神兵，开打。");
-      updateStageBackground(state.left.character);
+      updateStageBackground();
     }
 
     function swapSides() {
@@ -1615,7 +1711,7 @@
       $("rightWeapon").value = state.right.weapon;
       resetFight(false);
       log("左右换人，对调舞台。");
-      updateStageBackground(state.left.character);
+      updateStageBackground();
     }
 
     function log(text) {
