@@ -243,9 +243,8 @@
     .weapon-line img {
       width: 44px;
       height: 44px;
-      object-fit: cover;
-      border-radius: 6px;
-      background: #11131c;
+      object-fit: contain;
+      border-radius: 4px;
     }
     .weapon-line strong { display: block; }
     .weapon-line small { color: var(--soft); font-weight: 900; font-size: 11px; line-height: 1.2; }
@@ -427,7 +426,6 @@
     .fighter.rainbow { filter: drop-shadow(0 0 26px rgba(91,124,181,.74)); }
     .fighter.boss-strike { animation: bossStrike 1.05s ease; filter: drop-shadow(0 0 36px rgba(184,74,48,.82)); }
     .fighter.boss-mode img { transform: scale(1.28); filter: drop-shadow(0 26px 20px rgba(0,0,0,.26)) drop-shadow(0 0 24px rgba(184,74,48,.5)); }
-    .fighter.disarmed .weapon-ghost { opacity: 0; transform: translateY(-48px) scale(.25) rotate(-18deg); }
     .fighter.shielded::after,
     .fighter.evading::after,
     .fighter.boss-mode::after {
@@ -490,18 +488,26 @@
     .fighter.attacking .weapon-aura { animation: auraFlash .55s ease; }
     .weapon-ghost {
       position: absolute;
-      width: 76px;
-      height: 76px;
-      right: -8px;
-      top: 20px;
-      object-fit: cover;
-      border-radius: 8px;
-      opacity: .78;
-      mix-blend-mode: multiply;
-      filter: drop-shadow(0 6px 6px rgba(0,0,0,.22));
+      width: 140px;
+      height: 140px;
+      right: -24px;
+      top: 28px;
+      object-fit: contain;
+      opacity: .95;
+      transform: rotate(-18deg);
+      transform-origin: 20% 80%;
+      filter: drop-shadow(0 6px 6px rgba(0,0,0,.32));
       pointer-events: none;
+      z-index: 3;
     }
-    .fighter.right .weapon-ghost { right: auto; left: -8px; }
+    .fighter.right .weapon-ghost {
+      right: auto;
+      left: -24px;
+      transform: rotate(18deg);
+      transform-origin: 80% 80%;
+    }
+    .fighter.disarmed .weapon-ghost { opacity: 0; transform: translateY(-48px) scale(.25) rotate(-18deg); }
+    .fighter.right.disarmed .weapon-ghost { transform: translateY(-48px) scale(.25) rotate(18deg); }
     .impact {
       position: absolute;
       left: 50%;
@@ -736,7 +742,8 @@
       .fighter.left { left: 8%; }
       .fighter.right { right: 8%; }
       .moves { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-      .weapon-ghost { width: 54px; height: 54px; }
+      .weapon-ghost { width: 100px; height: 100px; right: -18px; top: 22px; }
+      .fighter.right .weapon-ghost { left: -18px; }
       @keyframes leftCharge { 0%{translate:0 0} 46%{translate:110px 0; scale:1.05} 100%{translate:0 0} }
       @keyframes rightCharge { 0%{translate:0 0} 46%{translate:-110px 0; scale:1.05} 100%{translate:0 0} }
     }
@@ -1079,6 +1086,14 @@
       `;
     }
 
+    function weaponImageForSide(weapon, side) {
+      if (!weapon || !weapon.image) return "";
+      // 左边小人用朝右版本 _r.png，右边小人用朝左版本 _l.png
+      return side === "left"
+        ? weapon.image
+        : weapon.image.replace("_r.png", "_l.png");
+    }
+
     function renderStage() {
       const leftChar = charById(state.left.character);
       const rightChar = charById(state.right.character);
@@ -1086,8 +1101,8 @@
       const rightWeapon = weaponById(state.right.weapon);
       $("leftSprite").src = CUTOUT + leftChar.file;
       $("rightSprite").src = CUTOUT + rightChar.file;
-      $("leftWeaponGhost").src = leftWeapon.image;
-      $("rightWeaponGhost").src = rightWeapon.image;
+      $("leftWeaponGhost").src = weaponImageForSide(leftWeapon, "left");
+      $("rightWeaponGhost").src = weaponImageForSide(rightWeapon, "right");
       $("leftWeaponGhost").style.display = leftWeapon.image && !state.left.disarmed ? "block" : "none";
       $("rightWeaponGhost").style.display = rightWeapon.image && !state.right.disarmed ? "block" : "none";
       $("leftName").textContent = leftChar.name;

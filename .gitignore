@@ -3,5 +3,8 @@
 东方名著武器库/
 ocr_tessdata/
 design-preview*.html
+design-demo-*.html
 icons/gen_png.py
 node_modules/
+tools/__pycache__/
+*.zip

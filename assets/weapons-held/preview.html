@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>武器手持效果预览</title>
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #2a2520;
+      font-family: system-ui, sans-serif;
+      color: #f4f2ed;
+    }
+    h1 { margin-bottom: 8px; }
+    p { color: #b5aea0; margin-bottom: 32px; }
+    .stage {
+      display: flex;
+      align-items: flex-end;
+      gap: 120px;
+      padding: 40px 80px;
+      background: rgba(0,0,0,.35);
+      border-radius: 16px;
+    }
+    .fighter {
+      position: relative;
+      width: 160px;
+      height: 200px;
+    }
+    .fighter img.sprite {
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 140px;
+      height: auto;
+      object-fit: contain;
+    }
+    .fighter img.weapon {
+      position: absolute;
+      width: 120px;
+      height: 120px;
+      object-fit: contain;
+      pointer-events: none;
+      filter: drop-shadow(0 4px 6px rgba(0,0,0,.4));
+    }
+    /* 左边小人：武器在右侧，指向右（朝右版本 _r） */
+    .fighter.left .weapon {
+      right: -40px;
+      bottom: 60px;
+      transform: rotate(-25deg);
+      transform-origin: bottom left;
+    }
+    /* 右边小人：武器在左侧，指向左（朝左版本 _l） */
+    .fighter.right .weapon {
+      left: -40px;
+      bottom: 60px;
+      transform: rotate(25deg);
+      transform-origin: bottom right;
+    }
+    .labels {
+      display: flex;
+      gap: 120px;
+      margin-top: 16px;
+      width: 560px;
+      justify-content: space-around;
+    }
+    .labels span { color: #c9a84c; }
+    .weapon-selector {
+      margin-top: 32px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: 600px;
+    }
+    .weapon-selector button {
+      padding: 8px 16px;
+      border: 1px solid #c9a84c;
+      background: rgba(201,168,76,.15);
+      color: #f4f2ed;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .weapon-selector button.active {
+      background: #c9a84c;
+      color: #1a1614;
+    }
+  </style>
+</head>
+<body>
+  <h1>武器手持效果预览</h1>
+  <p>左边小人用 _r 版本朝右 · 右边小人用 _l 版本朝左</p>
+
+  <div class="stage">
+    <div class="fighter left">
+      <img class="sprite" src="../Ruogu Painting/cutouts/1_cutout.png" alt="左边小人">
+      <img class="weapon" id="leftWeapon" src="01_jingubang_r.png" alt="武器">
+    </div>
+    <div class="fighter right">
+      <img class="sprite" src="../Ruogu Painting/cutouts/2_cutout.png" alt="右边小人">
+      <img class="weapon" id="rightWeapon" src="01_jingubang_l.png" alt="武器">
+    </div>
+  </div>
+  <div class="labels">
+    <span>左边小人（武器在右）</span>
+    <span>右边小人（武器在左）</span>
+  </div>
+
+  <div class="weapon-selector">
+    <button class="active" data-base="01_jingubang">金箍棒</button>
+    <button data-base="05_bajiaoshan">芭蕉扇</button>
+    <button data-base="06_qinglongyanyuedao">青龙偃月刀</button>
+    <button data-base="09_qinggangjian">青釭剑</button>
+    <button data-base="12_fantianyin">番天印</button>
+  </div>
+
+  <script>
+    document.querySelectorAll('.weapon-selector button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.weapon-selector button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const base = btn.dataset.base;
+        document.getElementById('leftWeapon').src = base + '_r.png';
+        document.getElementById('rightWeapon').src = base + '_l.png';
+      });
+    });
+  </script>
+</body>
+</html>

@@ -2041,9 +2041,9 @@ h1 {
 }
 
 .weapon-icon.weapon-img img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  width: 92%;
+  height: 92%;
+  object-fit: contain;
   display: block;
 }
 
@@ -2055,8 +2055,7 @@ h1 {
 .weapon-silhouette img {
   width: 92%;
   height: 92%;
-  object-fit: cover;
-  border-radius: 50%;
+  object-fit: contain;
   display: block;
 }
 
