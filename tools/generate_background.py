@@ -27,18 +27,18 @@ DEFAULT_OUT = "07_reading_galaxy_map.png"
 
 # 默认生图 prompt（可在此修改，也可通过环境变量 BG_PROMPT 传入）
 DEFAULT_PROMPT = (
-    "A panoramic ancient Chinese celestial reading map, floating among golden clouds "
-    "and a starry river. At the bottom, a misty mountain valley symbolizing humility "
-    "and beginning, with a glowing spring as the starting point. From the spring, a "
-    "luminous path made of open book pages, ink strokes, and starlight rises upward, "
-    "branching toward seven symbolic waypoints in sequence: a stone bridge, a winding "
-    "forest trail, a solitary island, a swirling nebula, a brilliant sea of stars, and "
-    "finally a distant luminous gate. The first waypoint glows warm gold; the later ones "
-    "are softer, dreamlike, waiting to be awakened. Style: Chinese mythological fantasy, "
-    "Dunhuang-inspired, Song-dynasty landscape aesthetics, ink wash with gold leaf, "
-    "ethereal clouds, deep indigo and cream palette, magical atmosphere. "
-    "No text, no characters, no UI elements. Landscape 16:9 composition, "
-    "suitable for iPad and desktop full-screen background."
+    "A panoramic ancient Chinese celestial star-map, entirely set in a vast starry river "
+    "and deep indigo cosmos. A luminous path made of open book pages, golden ink strokes, "
+    "and constellations winds upward and inward through space, connecting a series of "
+    "glowing starfield realms one after another. The first realm near the bottom is a soft, "
+    "welcoming valley of light and drifting characters, like a gentle nebula where a journey "
+    "begins. Further along the path, the realms become increasingly celestial: spiral "
+    "galaxies, star clusters, radiant nebulae, and distant luminous gates. The whole image "
+    "feels like an ancient Chinese astronomical chart merged with a fantasy star atlas. "
+    "Style: Chinese mythological fantasy, Dunhuang-inspired, Song-dynasty celestial map "
+    "aesthetics, ink wash with gold leaf, ethereal clouds of stars, deep indigo and cream "
+    "palette, magical atmosphere. No text, no characters, no UI elements. "
+    "Landscape 16:9 composition, suitable for iPad and desktop full-screen background."
 )
 
 
