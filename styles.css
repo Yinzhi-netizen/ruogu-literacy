@@ -2239,18 +2239,28 @@ h1 {
   font-family: var(--font-heading);
   font-size: clamp(36px, 7vw, 56px);
   font-weight: 900;
-  letter-spacing: 3px;
+  letter-spacing: 0;
   color: var(--ink);
   line-height: 1.25;
 }
 
-.landing-sub {
+.landing-tagline {
   margin: 12px 0 0;
+  font-family: var(--font-heading);
+  font-size: clamp(20px, 4vw, 28px);
+  color: var(--primary-deep);
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.35;
+}
+
+.landing-sub {
+  margin: 8px 0 0;
   font-family: var(--font-latin);
   font-size: 16px;
   color: var(--primary);
   font-weight: 700;
-  letter-spacing: 2px;
+  letter-spacing: 0;
 }
 
 /* ---- Module cards ---- */

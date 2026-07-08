@@ -1,6 +1,6 @@
 {
-  "name": "若谷自主阅读计划",
-  "short_name": "自主阅读",
+  "name": "若谷星河书旅",
+  "short_name": "星河书旅",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#f7f6f2",
