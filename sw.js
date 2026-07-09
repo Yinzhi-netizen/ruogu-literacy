@@ -1,4 +1,4 @@
-const cacheName = "ruogu-literacy-v27";
+const cacheName = "ruogu-literacy-v28";
 const assets = [
   "./",
   "./index.html",
@@ -28,7 +28,8 @@ const assets = [
   "./icons/icon-192.svg",
   "./icons/icon-512.svg",
   "./assets/backgrounds/07_reading_galaxy_map_mobile.jpg",
-  "./assets/backgrounds/pedestal_shizigu.png",
+  "./assets/backgrounds/pedestal_book_flat.png",
+  "./assets/backgrounds/pedestal_book_stack.png",
   "./assets/backgrounds/06_cloud_characters_mobile.jpg",
   "./assets/backgrounds/05_scholar_mountain_mobile.jpg",
   "./assets/backgrounds/01_fengshen_cloud.jpg",

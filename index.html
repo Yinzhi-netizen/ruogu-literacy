@@ -103,16 +103,36 @@
           0 0 46px rgba(255, 170, 60, 0.4),
           0 2px 12px rgba(0,0,0,0.55);
       }
-      /* 漂浮的石阶台基，字站在台面上，与字一同漂浮 */
+      /* 拾字谷台基 = 平摊书，宽度≈「拾字谷」三字宽 */
       .realm-gate .pedestal {
         position: relative;
         z-index: 1;
         display: block;
-        width: clamp(150px, 30vw, 200px);
-        height: auto;
-        margin: -0.62em auto 0;
-        filter: drop-shadow(0 12px 26px rgba(0, 0, 0, 0.45));
+        width: clamp(130px, 27vw, 178px);
+        aspect-ratio: 760 / 277;
+        margin: -0.15em auto 0;
+        background: url("./assets/backgrounds/pedestal_book_flat.png") center bottom / contain no-repeat;
+        filter: drop-shadow(0 8px 18px rgba(20, 24, 48, 0.42));
         pointer-events: none;
+      }
+      /* 书页底下一层暖金柔光，把书页轻轻托起（不烧进图，纯CSS可调） */
+      .realm-gate .pedestal-glow {
+        position: absolute;
+        left: 50%;
+        bottom: 4%;
+        transform: translateX(-50%);
+        width: clamp(120px, 25vw, 165px);
+        height: 34px;
+        border-radius: 50%;
+        background: radial-gradient(ellipse at center,
+          rgba(255, 224, 160, 0.55) 0%,
+          rgba(255, 205, 110, 0.28) 38%,
+          rgba(255, 190, 90, 0.10) 62%,
+          transparent 78%);
+        filter: blur(7px);
+        z-index: 0;
+        pointer-events: none;
+        animation: glowPulse 3.2s ease-in-out infinite;
       }
       .realm-gate .hint {
         margin-top: 8px;
@@ -142,22 +162,25 @@
         animation: float 3.6s ease-in-out infinite;
       }
       .locked-star .lock-name {
-        font-size: clamp(13px, 1.9vw, 18px);
+        font-size: clamp(12px, 1.7vw, 16px);
+        line-height: 1.35;
         color: rgba(240, 228, 198, 0.42);
-        letter-spacing: 2px;
+        letter-spacing: 3px;
         text-shadow: 0 1px 6px rgba(0,0,0,0.5);
       }
+      /* 星域占位台基 = 叠书台 */
       .locked-star .lock-step {
         display: block;
-        width: clamp(96px, 19vw, 132px);
-        height: auto;
-        margin-top: -0.5em;
-        opacity: 0.72;
-        filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.4));
+        width: clamp(84px, 17vw, 118px);
+        aspect-ratio: 760 / 424;
+        margin-top: -0.2em;
+        background: url("./assets/backgrounds/pedestal_book_stack.png") center bottom / contain no-repeat;
+        opacity: 0.5;
+        filter: drop-shadow(0 6px 14px rgba(20, 24, 48, 0.3)) saturate(0.75);
       }
-      .locked-star.s1 { bottom: 40%; left: 58%; animation-delay: 0.6s; }
-      .locked-star.s2 { bottom: 55%; left: 42%; animation-delay: 1.4s; }
-      .locked-star.s3 { bottom: 69%; left: 61%; animation-delay: 2.1s; }
+      .locked-star.s1 { bottom: 38%; left: 62%; animation-delay: 0.6s; }
+      .locked-star.s2 { bottom: 52%; left: 40%; animation-delay: 1.4s; }
+      .locked-star.s3 { bottom: 64%; left: 64%; animation-delay: 2.1s; }
 
       @keyframes float {
         0%, 100% { transform: translate(-50%, 0); }
@@ -166,6 +189,10 @@
       @keyframes pulse {
         0%, 100% { opacity: 0.55; transform: translate(-50%, -50%) scale(1); }
         50% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+      }
+      @keyframes glowPulse {
+        0%, 100% { opacity: 0.7; transform: translateX(-50%) scale(0.94); }
+        50% { opacity: 1; transform: translateX(-50%) scale(1.06); }
       }
     </style>
   </head>
@@ -179,22 +206,23 @@
 
       <a class="realm-gate" href="./home.html" aria-label="进入拾字谷">
         <span class="halo"></span>
+        <span class="pedestal-glow"></span>
         <div class="name">拾字谷</div>
-        <img class="pedestal" src="./assets/backgrounds/pedestal_shizigu.png" alt="" />
+        <span class="pedestal"></span>
         <div class="hint">点击进入</div>
       </a>
 
       <span class="locked-star s1">
-        <span class="lock-name">星域 · 待开启</span>
-        <img class="lock-step" src="./assets/backgrounds/pedestal_shizigu.png" alt="" />
+        <span class="lock-name">星域<br>待开启</span>
+        <span class="lock-step"></span>
       </span>
       <span class="locked-star s2">
-        <span class="lock-name">星域 · 待开启</span>
-        <img class="lock-step" src="./assets/backgrounds/pedestal_shizigu.png" alt="" />
+        <span class="lock-name">星域<br>待开启</span>
+        <span class="lock-step"></span>
       </span>
       <span class="locked-star s3">
-        <span class="lock-name">星域 · 待开启</span>
-        <img class="lock-step" src="./assets/backgrounds/pedestal_shizigu.png" alt="" />
+        <span class="lock-name">星域<br>待开启</span>
+        <span class="lock-step"></span>
       </span>
     </main>
   </body>
