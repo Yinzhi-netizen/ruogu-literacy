@@ -957,6 +957,13 @@ h1 {
   gap: 18px;
 }
 
+/* 听写关卡片：拼音那行不该撑开（.challenge 的 1fr 是给认读关大字用的） */
+.challenge.dictation-card {
+  grid-template-rows: none;
+  grid-auto-rows: auto;
+  align-content: start;
+}
+
 .prompt {
   color: var(--ink-muted);
   font-size: 16px;
