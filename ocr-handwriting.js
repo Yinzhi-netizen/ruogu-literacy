@@ -71,7 +71,7 @@
       ctx.restore();
     }
     ctx.restore();
-    ctx.lineWidth = 26;
+    ctx.lineWidth = 12;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     ctx.strokeStyle = "#111111";
@@ -84,7 +84,7 @@
     const ctx = canvas.getContext("2d");
     let drawing = false;
 
-    ctx.lineWidth = 26;
+    ctx.lineWidth = 12;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     ctx.strokeStyle = "#111111";

@@ -2522,7 +2522,7 @@ h1 {
 }
 
 /* ---- Responsive ---- */
-@media (max-width: 760px) {
+@media (max-width: 900px) {
   .stage-row { grid-template-columns: 1fr; }
 
   .forge-side {
