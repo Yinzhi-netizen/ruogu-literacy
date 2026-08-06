@@ -951,17 +951,19 @@ h1 {
 }
 
 /* ---- Challenge ---- */
+/* 用 flex column 而不是 grid-template-rows：绕开 iPad Safari 切换关卡时
+   grid 1fr 不触发重排的 bug（窗口 resize 后又会恢复正常的那个怪癖） */
 .challenge {
-  display: grid;
-  grid-template-rows: auto auto 1fr auto auto;
+  display: flex;
+  flex-direction: column;
   gap: 18px;
 }
 
-/* 听写关卡片：拼音那行不该撑开（.challenge 的 1fr 是给认读关大字用的） */
-.challenge.dictation-card {
-  grid-template-rows: none;
-  grid-auto-rows: auto;
-  align-content: start;
+/* 认读关中间的大字区域需要伸展占满剩余空间 */
+.challenge > .options,
+.challenge > .option-grid {
+  flex: 1;
+  align-content: center;
 }
 
 .prompt {
