@@ -406,9 +406,17 @@ h1 {
 }
 
 /* ---- Stage row ---- */
+/* 用 flex column 而不是 grid：绕开 iPad Safari 切换关卡时 grid 行高缓存 bug。
+   .stage 原本 display:grid，切到阅读关再切回时行高不重新计算，会把 .challenge
+   拉伸到残留高度，再加上 .option-grid flex:1 就把认读关拼音选项间距拉大。 */
 .stage {
   min-height: 440px;
-  display: grid;
+  display: flex;
+  flex-direction: column;
+}
+
+.stage > * {
+  flex-shrink: 0;
 }
 
 .stage-row {
