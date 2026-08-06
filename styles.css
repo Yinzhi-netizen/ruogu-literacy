@@ -64,16 +64,29 @@ button {
 }
 
 /* ---- Shell ---- */
+/* 用 flex column 而不是 grid-template-rows：绕开 iPad Safari grid 行高缓存 bug。
+   原来 grid-template-rows: auto auto auto 1fr auto 里的 1fr 行（stage-row）
+   在切到阅读关（内容很高）再切回认读关时，1fr 高度不重置，导致 stage-row 被
+   强制拉伸，进而把内部所有卡片撑得过高。 */
 .app-shell {
   width: min(980px, 100%);
   min-height: 100vh;
   margin: 0 auto;
   padding: max(18px, env(safe-area-inset-top)) 18px max(22px, env(safe-area-inset-bottom));
-  display: grid;
-  grid-template-rows: auto auto auto 1fr auto;
+  display: flex;
+  flex-direction: column;
   gap: 16px;
   position: relative;
   z-index: 1;
+}
+
+.app-shell > * {
+  flex-shrink: 0;
+}
+
+.app-shell > .stage-row {
+  flex: 1;
+  min-height: 0;
 }
 
 /* ---- Topbar ---- */
@@ -663,13 +676,21 @@ h1 {
 .duel-moves b { font-size: 12px; line-height: 1.1; }
 
 .duel-stage {
-  display: grid;
-  grid-template-rows: auto 1fr auto;
+  display: flex;
+  flex-direction: column;
   min-height: 430px;
   border: 1px solid var(--line);
   border-radius: 6px;
   overflow: hidden;
   background: rgba(255, 255, 255, .45);
+}
+
+.duel-stage > * {
+  flex-shrink: 0;
+}
+
+.duel-stage > .duel-arena {
+  flex: 1;
 }
 
 .duel-score {
@@ -826,9 +847,21 @@ h1 {
 }
 
 .study-card {
-  display: grid;
-  grid-template-rows: auto 1fr auto auto auto;
+  display: flex;
+  flex-direction: column;
   text-align: center;
+}
+
+.study-card > * {
+  flex-shrink: 0;
+}
+
+.study-card > .big-word,
+.study-card > .option-grid,
+.study-card > .options {
+  flex: 1;
+  display: grid;
+  place-items: center;
 }
 
 /* ---- Level badge ---- */
