@@ -1058,10 +1058,24 @@ h1 {
 }
 
 /* ---- Handwrite pad ---- */
-.handwrite-pad {
+/* 笔刷条 + 手写板 + 分格擦除按钮，三者同宽，擦除按钮才能和田字格对齐 */
+.pad-zone {
   width: min(680px, 100%);
-  aspect-ratio: 12 / 7;
   margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pad-zone.multi {
+  width: 100%;
+  max-width: 900px;
+}
+
+.handwrite-pad {
+  width: 100%;
+  display: block;
+  aspect-ratio: 12 / 7;
   border: 1px solid var(--line);
   border-radius: 6px;
   background: #fff;
@@ -1070,9 +1084,82 @@ h1 {
 }
 
 .handwrite-pad.multi {
-  width: 100%;
-  max-width: 900px;
   aspect-ratio: var(--pad-ratio, 12 / 7);
+}
+
+/* 笔刷粗细：滑杆 + 右侧实时预览圆点 */
+.brush-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brush-label {
+  font-weight: 800;
+  font-size: 15px;
+  color: var(--ink-muted);
+  flex-shrink: 0;
+}
+
+.brush-slider {
+  flex: 1;
+  min-width: 0;
+  height: 36px;
+  accent-color: var(--primary);
+  touch-action: manipulation;
+  cursor: pointer;
+}
+
+.brush-preview {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border: 1px dashed var(--line);
+  border-radius: 6px;
+  background: #fff;
+}
+
+.brush-preview i {
+  display: block;
+  border-radius: 50%;
+  background: #111;
+  transition: width .1s ease, height .1s ease;
+}
+
+/* 分格擦除：一格一个按钮，列数跟着字数走 */
+.cell-erasers {
+  display: grid;
+  grid-template-columns: repeat(var(--cells, 1), minmax(0, 1fr));
+  gap: 10px;
+}
+
+.cell-eraser {
+  min-height: 44px;
+  border-radius: 6px;
+  background: rgba(91, 124, 181, .1);
+  color: var(--primary-deep);
+  font-weight: 800;
+  font-size: 15px;
+  box-shadow: var(--shadow-soft);
+  transition: transform .12s ease, opacity .12s ease;
+}
+
+.cell-eraser:active {
+  transform: translateY(1px);
+}
+
+.cell-eraser[disabled],
+.soft-button[disabled] {
+  opacity: .35;
+  box-shadow: none;
+  pointer-events: none;
+}
+
+/* 「提交识别」单独一行时，别再叠一次 22px 的上边距 */
+.actions + .actions {
+  margin-top: 10px;
 }
 
 /* ---- Pinyin ---- */
