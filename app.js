@@ -3,7 +3,7 @@
 //   → ocr-handwriting → weapon-system → ui-common → app
 
 const stories = window.RUOGU_STORIES || [];
-const readingTexts = window.RUOGU_READING_TEXTS || { recite: [], jokes: [], poems: [] };
+const readingTexts = window.RUOGU_READING_TEXTS || { recite: [], lyrics: [], poems: [] };
 
 const STATE = window.RUOGU_STATE;
 const DATA = window.RUOGU_WORD_DATA;
@@ -209,9 +209,13 @@ function renderDictation() {
 // ===== 阅读关 =====
 const READING_CATS = [
   { key: "recite", icon: "📜", name: "必背课文", items: () => readingTexts.recite || [], annotate: false },
-  { key: "jokes", icon: "😄", name: "米小圈", items: () => readingTexts.jokes || [], annotate: true },
+  { key: "lyrics", icon: "🎵", name: "歌词", items: () => readingTexts.lyrics || [], annotate: true },
   { key: "poems", icon: "🌸", name: "古诗", items: () => readingTexts.poems || [], annotate: true }
 ];
+
+// 旧存档里可能还存着已经删掉的分类（如 jokes），落回第一个分类，
+// 否则顶栏三个 tab 会一个都不高亮
+if (!READING_CATS.some((c) => c.key === readingCat)) readingCat = READING_CATS[0].key;
 
 const READING_FILTERS = [
   { key: "all", label: "全部" },
