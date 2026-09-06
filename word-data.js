@@ -23,6 +23,11 @@
     return vols.length > 1 ? ["全部", ...vols] : vols;
   }
 
+  // 单元显示名：去掉类型后缀（「·阅读」「·识字」「（拼音）」），选择器里只留「第X单元」
+  function cleanUnitName(name) {
+    return String(name || "").replace(/·(阅读|识字)$/, "").replace(/（拼音）$/, "");
+  }
+
   // 展开成扁平条目 [{grade, vol, unitLabel, unitObj}]
   // scope="全部" 时单元名前加册名前缀（如「上册·第一单元」），避免上下册单元重名
   function listEntries(grade, scope) {
@@ -33,7 +38,7 @@
         out.push({
           grade: s.grade,
           vol: s.vol,
-          unitLabel: scope === "全部" && multiVol ? s.vol + "·" + u.unit : u.unit,
+          unitLabel: (scope === "全部" && multiVol ? s.vol + "·" : "") + cleanUnitName(u.unit),
           unitObj: u
         });
       });

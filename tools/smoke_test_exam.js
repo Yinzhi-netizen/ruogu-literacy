@@ -60,7 +60,7 @@ global.localStorage = { _m: {}, getItem(k) { return this._m[k] ?? null; }, setIt
 // 预置：若谷旧档案，77 星，直接定位到 二年级·上册·第二单元·树之歌
 localStorage.setItem("ruogu-literacy-profiles-v1", JSON.stringify({ activeId: "ruogu", profiles: { ruogu: {
   id: "ruogu", name: "若谷", version: 1, totalStars: 77, cursor: 0, readingCursor: 0, readingCat: "recite",
-  scope: "上册", grade: "二年级", unit: "第二单元·识字", lesson: "树之歌",
+  scope: "上册", grade: "二年级", unit: "第二单元", lesson: "树之歌",
   proficiency: {}, completedReadings: { "recite::静夜思": true }, learnedAt: {}
 } } }));
 global.navigator = {};
