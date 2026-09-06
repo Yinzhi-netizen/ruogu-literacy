@@ -971,6 +971,13 @@ if (profileToolsBtn) profileToolsBtn.addEventListener("click", openProfileTools)
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js"));
+  // 新版本上线后自动刷新一次，免手动清缓存
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (refreshing) return;
+    refreshing = true;
+    location.reload();
+  });
 }
 
 bindScopeBar();
