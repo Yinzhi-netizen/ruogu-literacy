@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>若谷识字 · 二年级拼音抽查</title>
+<style>
+  :root{--bg:#f4ecd8;--paper:#fffdf6;--ink:#3a2a1a;--gold:#b8860b;--red:#9b2226;
+    --line:#e3d5b8;--warn:#fff3cd;--warnbd:#e0a800;--miss:#ffd9d9;--missbd:#c0392b;--poly:#e0f0ff;--polybd:#3a86c0;}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"Kaiti","KaiTi","STKaiti","楷体",serif;line-height:1.5;padding-bottom:80px}
+  header{background:linear-gradient(135deg,#7a1d20,#9b2226);color:#fdf6e3;padding:16px 24px;position:sticky;top:0;z-index:20;box-shadow:0 3px 10px rgba(0,0,0,.25)}
+  header h1{margin:0 0 3px;font-size:21px}
+  header p{margin:0;font-size:13px;opacity:.92}
+  .bar{background:var(--paper);border-bottom:1px solid var(--line);padding:10px 24px;position:sticky;top:64px;z-index:19;display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-size:14px}
+  .bar button{font-family:inherit;font-size:14px;border:1px solid var(--gold);background:#fff;color:var(--red);border-radius:6px;padding:6px 14px;cursor:pointer}
+  .bar button.active{background:var(--red);color:#fff;border-color:var(--red)}
+  .stat{font-size:13px;color:#7a6038;margin-left:auto}
+  .stat b{color:var(--red)}
+  main{max-width:1100px;margin:14px auto;padding:0 14px}
+  .alert{background:var(--miss);border:1px solid var(--missbd);border-radius:8px;padding:10px 14px;margin:12px 0;font-size:14px;color:#7a1f17}
+  .alert.ok{background:#eaf7ea;border-color:#9bd49b;color:#2e7d32}
+  .unit{background:var(--paper);border:1px solid var(--line);border-radius:10px;margin:12px 0;box-shadow:0 2px 6px rgba(0,0,0,.07);overflow:hidden}
+  .unit-head{background:#f0e6cc;padding:8px 14px;font-weight:bold;color:var(--red);display:flex;gap:10px;align-items:center}
+  .unit-head .vol{font-size:12px;background:#fff;border-radius:4px;padding:1px 8px;color:#7a6038}
+  .grid{display:flex;flex-wrap:wrap;gap:8px;padding:12px 14px}
+  .cell{background:#fff;border:1px solid var(--line);border-radius:8px;padding:6px 8px;min-width:120px;display:flex;flex-direction:column;gap:2px}
+  .cell.poly{background:var(--poly);border-color:var(--polybd)}
+  .cell.miss{background:var(--miss);border-color:var(--missbd)}
+  .cell .w{font-size:16px;font-weight:bold}
+  .cell .p{font-size:14px;color:#1f6f66;font-family:sans-serif;border:1px solid transparent;border-radius:4px;padding:1px 4px;min-height:20px}
+  .cell .p:focus{outline:2px solid var(--gold);background:#fffef8}
+  .cell .tag{font-size:10px;color:var(--polybd);font-family:sans-serif}
+  .cell.miss .tag{color:var(--missbd)}
+  footer{position:fixed;bottom:0;left:0;right:0;background:var(--paper);border-top:1px solid var(--line);padding:10px 24px;display:flex;gap:10px;align-items:center;font-size:13px;box-shadow:0 -2px 8px rgba(0,0,0,.06);z-index:20}
+  footer button{font-family:inherit;font-size:14px;border-radius:6px;padding:8px 18px;cursor:pointer}
+  footer .exp{background:var(--gold);color:#fff;border:none}
+  .hint{color:#7a6038;font-size:12px}
+  body.poly-only .cell:not(.poly):not(.miss){display:none}
+  body.poly-only .unit:not(:has(.cell.poly)):not(:has(.cell.miss)){display:none}
+</style>
+</head>
+<body>
+<header>
+  <h1>若谷识字 · 二年级上册拼音抽查</h1>
+  <p>蓝框=多音字/易错（优先核对）· 红框=缺拼音 · 点拼音可改 · 改完导出</p>
+</header>
+<div class="bar">
+  <button id="btnAll" class="active" onclick="setView('all')">全部</button>
+  <button id="btnPoly" onclick="setView('poly')">只看多音字/缺漏</button>
+  <span class="stat" id="stat"></span>
+</div>
+<main id="app"></main>
+<footer>
+  <span class="hint">已人工校对一轮（教课jiāo/发夹fà/一行háng/数星星shǔ/天都dū/盛水chéng/钉着dìng等）。请重点扫蓝框。</span>
+  <button class="exp" onclick="exportPinyin()">⬇ 导出拼音 JSON</button>
+</footer>
+
+<script src="../grade2-words.js"></script>
+<script src="../grade2-pinyin.js"></script>
+<script>
+const OCR = window.RUOGU_OCR_G2;
+const PINYIN = Object.assign({}, window.RUOGU_PINYIN);
+
+// 含多音字的词 → 标蓝重点核对
+const POLY = ["长","重","和","为","着","分","数","了","得","地","行","乐","只","教","相","转","降","空","干","发","背","钉","几","盛","便","薄","角","系","曲","调","担","藏","号","奔","当","切","差","笼","种","场","难","蒙","朝","混","冲","量","好","没","还","会","应","兴","铺","似","炸","都","中"];
+function isPoly(w){ return [...w].some(c=>POLY.includes(c)); }
+
+const app=document.getElementById('app');
+let view='all';
+const editable={}; // 覆盖编辑
+
+function build(){
+  app.innerHTML='';
+  let total=0, miss=0, poly=0;
+  for(const vol of Object.keys(OCR)){
+    OCR[vol].forEach(u=>{
+      const seen=[];
+      u.lessons.forEach(l=>{ l.recognize.forEach(w=>seen.push(w)); l.write.forEach(w=>seen.push(w)); });
+      const uniq=[...new Set(seen)];
+      const unit=document.createElement('div');unit.className='unit';
+      const head=document.createElement('div');head.className='unit-head';
+      head.innerHTML=`<span class="vol">${vol}</span>${u.unit}`;
+      const grid=document.createElement('div');grid.className='grid';
+      uniq.forEach(w=>{
+        total++;
+        const p = (w in editable)?editable[w]:(PINYIN[w]||"");
+        const missing=!p;
+        const poison=isPoly(w);
+        if(missing)miss++; if(poison)poly++;
+        const cell=document.createElement('div');
+        cell.className='cell'+(missing?' miss':(poison?' poly':''));
+        const ww=document.createElement('div');ww.className='w';ww.textContent=w;
+        const pp=document.createElement('div');pp.className='p';pp.contentEditable=true;pp.textContent=p;
+        pp.dataset.word=w;
+        pp.onblur=()=>{editable[w]=pp.textContent.trim();};
+        cell.appendChild(ww);cell.appendChild(pp);
+        if(missing){const t=document.createElement('div');t.className='tag';t.textContent='⚠ 缺拼音';cell.appendChild(t);}
+        else if(poison){const t=document.createElement('div');t.className='tag';t.textContent='多音字·重点核对';cell.appendChild(t);}
+        grid.appendChild(cell);
+      });
+      unit.appendChild(head);unit.appendChild(grid);app.appendChild(unit);
+    });
+  }
+  document.getElementById('stat').innerHTML=`共 <b>${total}</b> 词 · 多音字 <b>${poly}</b> · 缺拼音 <b>${miss}</b>`;
+  const al=document.createElement('div');
+  al.className='alert'+(miss?'':' ok');
+  al.textContent=miss?`⚠ 有 ${miss} 个词缺拼音（红框），请补上`:`✓ 全部 ${total} 词都有拼音，重点核对 ${poly} 个多音字（蓝框）`;
+  app.insertBefore(al,app.firstChild);
+}
+function setView(v){
+  view=v;
+  document.getElementById('btnAll').classList.toggle('active',v==='all');
+  document.getElementById('btnPoly').classList.toggle('active',v==='poly');
+  document.body.classList.toggle('poly-only',v==='poly');
+}
+function exportPinyin(){
+  const out=Object.assign({},PINYIN,editable);
+  // 只保留词表里实际存在的词
+  const valid={};
+  const set=new Set();
+  for(const vol of Object.keys(OCR))OCR[vol].forEach(u=>u.lessons.forEach(l=>{l.recognize.forEach(w=>set.add(w));l.write.forEach(w=>set.add(w));}));
+  set.forEach(w=>{ valid[w]=out[w]||""; });
+  const blob=new Blob([JSON.stringify(valid,null,0)],{type:"application/json"});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download="拼音_二年级上册_定稿.json";a.click();
+}
+build();
+</script>
+</body>
+</html>

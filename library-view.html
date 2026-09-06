@@ -126,6 +126,12 @@
         color: var(--accent);
         box-shadow: 0 0 6px var(--glow-gold);
       }
+      .ch.wd {
+        width: auto;
+        min-width: 44px;
+        padding: 0 10px;
+        font-size: 20px;
+      }
       .ch.empty {
         color: #bbb;
         font-size: 13px;
@@ -202,13 +208,14 @@
   <body>
     <main class="lib-shell">
       <div class="lib-head">
-        <h1>若谷一年级识字库</h1>
-        <p>依据统编版（部编版）一年级上下册标准字表整理 · 供对照课本核对</p>
+        <h1>若谷识字库</h1>
+        <p>一年级依据统编版标准字表 · 二年级依据清澜山 G2 词语表 · 供对照课本核对</p>
       </div>
 
       <div class="vol-tabs">
-        <button class="vol-tab active" data-vol="上册">上册</button>
-        <button class="vol-tab" data-vol="下册">下册</button>
+        <button class="vol-tab active" data-vol="上册">一年级上册</button>
+        <button class="vol-tab" data-vol="下册">一年级下册</button>
+        <button class="vol-tab" data-vol="二上">二年级上册</button>
       </div>
 
       <div class="legend">
@@ -220,6 +227,7 @@
     </main>
 
     <script src="./grade1-library.js"></script>
+    <script src="./grade2-words.js"></script>
     <script>
       const content = document.querySelector("#content");
       const tabs = document.querySelectorAll(".vol-tab");
@@ -229,7 +237,52 @@
         return [...new Set(list)];
       }
 
+      // 二年级上册：词表视图（会认词/会写词）
+      function renderG2() {
+        const units = (window.RUOGU_OCR_G2 || {})["上册"] || [];
+        let totalR = 0, totalW = 0, totalL = 0;
+        let html = "";
+
+        units.forEach((u) => {
+          u.lessons.forEach((l) => {
+            totalL++;
+            totalR += (l.recognize || []).length;
+            totalW += (l.write || []).length;
+            const rChips = (l.recognize || []).map((w) => `<div class="ch wd">${w}</div>`).join("") || `<div class="ch empty">—</div>`;
+            const wChips = (l.write || []).map((w) => `<div class="ch wd write">${w}</div>`).join("") || `<div class="ch empty">无</div>`;
+            html += `
+              <div class="lesson-card">
+                <h3><span class="idx">${u.unit}</span>《${l.title}》</h3>
+                <div class="char-row">
+                  <div class="label">会认词（${(l.recognize || []).length}）</div>
+                  <div class="char-grid">${rChips}</div>
+                </div>
+                <div class="char-row">
+                  <div class="label">会写词（${(l.write || []).length}）</div>
+                  <div class="char-grid">${wChips}</div>
+                </div>
+              </div>
+            `;
+          });
+          if (u.recite && u.recite.length) {
+            html += `<div class="recite-section"><h2>${u.unit} · 背诵篇目</h2><div class="jjy-list">`;
+            u.recite.forEach((r) => { html += `<div>${r}</div>`; });
+            html += `</div></div>`;
+          }
+        });
+
+        html = `
+          <div class="vol-stats">
+            <div class="pill">会认词 <b>${totalR}</b></div>
+            <div class="pill">会写词 <b>${totalW}</b></div>
+            <div class="pill">课文 <b>${totalL}</b></div>
+          </div>
+        ` + html;
+        content.innerHTML = html;
+      }
+
       function renderVol(volName) {
+        if (volName === "二上") { renderG2(); return; }
         const data = window.RUOGU_GRADE1[volName];
         const allRecognize = uniq(data.lessons.flatMap((l) => l.recognize));
         const allWrite = uniq(data.lessons.flatMap((l) => l.write));

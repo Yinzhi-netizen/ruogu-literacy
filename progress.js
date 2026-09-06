@@ -119,7 +119,7 @@
     if (!storyChars.size) return;
 
     // 遍历当前词表，词中任意一字出现在故事中即加分
-    const words = DATA.buildWordTable(profile.scope || "全部");
+    const words = DATA.buildWordTable(profile.grade || "一年级", profile.scope || "全部");
     let changed = false;
     words.forEach((item) => {
       const w = item.word;

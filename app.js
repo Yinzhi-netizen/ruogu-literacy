@@ -21,8 +21,17 @@ localStorage.setItem("ruogu-ocr-key", "K87230002688957");
 
 const profile = STATE.active();
 let mode = "recognize";
-let scope = profile.scope || "全部";     // 出题范围：上册 / 下册 / 全部
-let words = DATA.buildWordTable(scope);   // 当前范围词表
+// 出题范围四级：年级 → 册 → 单元 → 课文（旧存档只有 scope，自动落在一年级，行为不变）
+let grade = profile.grade || "一年级";
+if (!DATA.grades().includes(grade)) grade = DATA.grades()[0] || "一年级";
+let scope = profile.scope || "全部";
+let unit = profile.unit || null;
+let lesson = profile.lesson || null;
+// 校验存档里的范围选择仍然有效（跨年级/单元调整后可能失效）
+if (scope !== "全部" && !DATA.volsOf(grade).includes(scope)) scope = "全部";
+if (unit && !DATA.unitsOf(grade, scope).includes(unit)) { unit = null; lesson = null; }
+if (lesson && !DATA.lessonsOf(grade, scope, unit).includes(lesson)) lesson = null;
+let words = DATA.buildWordTable(grade, scope, unit, lesson); // 当前范围词表
 let cursor = profile.cursor || 0;
 let readingCursor = profile.readingCursor || 0;
 let readingCat = profile.readingCat || "recite";
@@ -37,7 +46,10 @@ function persist() {
   const p = STATE.active();
   p.cursor = cursor;
   p.readingCursor = readingCursor;
+  p.grade = grade;
   p.scope = scope;
+  p.unit = unit;
+  p.lesson = lesson;
   p.readingCat = readingCat;
   STATE.save();
 }
@@ -56,12 +68,47 @@ function nextWord() {
   persist();
 }
 
-function setScope(newScope) {
-  scope = newScope;
-  words = DATA.buildWordTable(scope);
+function rebuildWords() {
+  words = DATA.buildWordTable(grade, scope, unit, lesson);
   cursor = 0;
   dictWord = null;
   persist();
+}
+
+function setGrade(newGrade) {
+  if (grade === newGrade) return;
+  grade = newGrade;
+  scope = "全部";
+  unit = null;
+  lesson = null;
+  rebuildWords();
+}
+
+function setScope(newScope) {
+  scope = newScope;
+  unit = null;
+  lesson = null;
+  rebuildWords();
+}
+
+function setUnit(newUnit) {
+  unit = newUnit || null;
+  lesson = null;
+  rebuildWords();
+}
+
+function setLesson(newLesson) {
+  lesson = newLesson || null;
+  rebuildWords();
+}
+
+// 进度条/识字条上显示的范围名（如「二年级·上册·树之歌」）
+function scopeLabel() {
+  const parts = [grade];
+  if (scope !== "全部") parts.push(scope);
+  if (unit) parts.push(unit);
+  if (lesson) parts.push(lesson);
+  return parts.join("·");
 }
 
 // 认读关：为某词生成 3 个干扰拼音 + 正确拼音，打乱
@@ -116,7 +163,7 @@ function awardStars(amount, reason, options = {}) {
 }
 
 function renderProgress() {
-  UI.renderProgress(mode, readingInArticle, scope, words);
+  UI.renderProgress(mode, readingInArticle, scopeLabel(), words);
   renderDuelExchange();
 }
 
@@ -228,6 +275,24 @@ const READING_FILTERS = [
 
 let readingFilter = "all"; // 当前阅读筛选
 
+// 阅读年级筛选：全部 / 一年级 / 二年级（未标年级的拓展阅读两个年级都显示）
+const READING_GRADE_FILTERS = [
+  { key: "all", label: "全部" },
+  { key: "一年级", label: "一年级" },
+  { key: "二年级", label: "二年级" }
+];
+let readingGrade = "all";
+
+function readingGradeOf(item) {
+  return item.grade || (/上册|下册/.test(item.author || "") ? "一年级" : "");
+}
+
+function readingGradeMatch(item) {
+  if (readingGrade === "all") return true;
+  const g = readingGradeOf(item);
+  return g === readingGrade || g === "";
+}
+
 function readingScore(item, catKey, index) {
   const key = readingKeyOf(catKey, item, index);
   const completedReadings = STATE.active().completedReadings || {};
@@ -260,6 +325,7 @@ function bestNextReading(cat) {
   const items = cat.items();
   const scored = items
     .map((item, index) => ({ item, index, score: readingScore(item, cat.key, index) }))
+    .filter((x) => readingGradeMatch(x.item))
     .filter((x) => readingFilterMatch(x.item, cat.key, x.index, "unread"))
     .sort((a, b) => b.score - a.score);
   return scored.length ? scored[0] : null;
@@ -297,6 +363,7 @@ function renderReading() {
   }));
 
   const filteredItems = scoredItems
+    .filter((x) => readingGradeMatch(x.item))
     .filter((x) => readingFilterMatch(x.item, cat.key, x.index, readingFilter))
     .sort((a, b) => b.score - a.score);
 
@@ -308,6 +375,11 @@ function renderReading() {
       <div class="scope-tabs reading-cats">
         ${READING_CATS.map((c) =>
           `<button class="scope-tab ${c.key === readingCat ? "active" : ""}" data-cat="${c.key}">${c.icon} ${c.name}</button>`
+        ).join("")}
+      </div>
+      <div class="reading-filter-bar">
+        ${READING_GRADE_FILTERS.map((f) =>
+          `<button class="reading-filter-pill ${f.key === readingGrade ? "active" : ""}" data-grade="${f.key}">${f.label}</button>`
         ).join("")}
       </div>
       ${next ? `
@@ -352,9 +424,16 @@ function renderReading() {
     });
   });
 
-  stage.querySelectorAll(".reading-filter-pill").forEach((btn) => {
+  stage.querySelectorAll(".reading-filter-pill[data-filter]").forEach((btn) => {
     btn.addEventListener("click", () => {
       readingFilter = btn.dataset.filter;
+      renderReading();
+    });
+  });
+
+  stage.querySelectorAll(".reading-filter-pill[data-grade]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      readingGrade = btn.dataset.grade;
       renderReading();
     });
   });
@@ -420,13 +499,63 @@ function renderStoryReader(cat, item, index) {
   });
 }
 
-// ===== 路由 =====
+// ===== 范围选择栏（年级 → 册 → 单元 → 课文）=====
+function renderScopeBar() {
+  const bar = document.querySelector("#scopeBar");
+  if (!bar) return;
+
+  const chip = (level, value, label, active, cls) =>
+    `<button class="scope-tab ${cls || ""} ${active ? "active" : ""}" data-level="${level}" data-value="${value}">${label}</button>`;
+
+  let html = `<div class="scope-row">${
+    DATA.grades().map((g) => chip("grade", g, g, g === grade, "grade-tab")).join("")
+  }</div>`;
+
+  const vols = DATA.volsOf(grade);
+  if (vols.length > 1) {
+    if (!vols.includes(scope)) scope = "全部";
+    html += `<div class="scope-row">${
+      vols.map((v) => chip("scope", v, v, v === scope)).join("")
+    }</div>`;
+  }
+
+  const units = DATA.unitsOf(grade, scope);
+  if (units.length) {
+    if (unit && !units.includes(unit)) { unit = null; lesson = null; }
+    html += `<div class="scope-row">${
+      chip("unit", "", "全部单元", !unit) + units.map((u) => chip("unit", u, u, u === unit, "unit-tab")).join("")
+    }</div>`;
+  }
+
+  if (unit) {
+    const lessons = DATA.lessonsOf(grade, scope, unit);
+    if (lesson && !lessons.includes(lesson)) lesson = null;
+    html += `<div class="scope-row">${
+      chip("lesson", "", "全部课文", !lesson) + lessons.map((l) => chip("lesson", l, l, l === lesson, "lesson-tab")).join("")
+    }</div>`;
+  }
+
+  bar.innerHTML = html;
+}
+
+function bindScopeBar() {
+  const bar = document.querySelector("#scopeBar");
+  if (!bar) return;
+  bar.addEventListener("click", (e) => {
+    const btn = e.target.closest(".scope-tab");
+    if (!btn) return;
+    const { level, value } = btn.dataset;
+    if (level === "grade") setGrade(value);
+    if (level === "scope") setScope(value);
+    if (level === "unit") setUnit(value || null);
+    if (level === "lesson") setLesson(value || null);
+    render();
+  });
+}
 function render() {
   tabs.forEach((tab) => tab.classList.toggle("active", tab.dataset.mode === mode));
 
-  document.querySelectorAll("#scopeBar .scope-tab").forEach((btn) => {
-    btn.classList.toggle("active", btn.dataset.scope === scope);
-  });
+  renderScopeBar();
 
   stage.style.opacity = "0";
   stage.style.transform = "translateY(8px)";
@@ -452,15 +581,6 @@ tabs.forEach((tab) => {
     render();
   });
 });
-
-function bindGlobalScopeTabs() {
-  document.querySelectorAll("#scopeBar .scope-tab").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      setScope(btn.dataset.scope);
-      render();
-    });
-  });
-}
 
 function openProfileTools() {
   const encodeSyncCode = (text) => {
@@ -612,5 +732,5 @@ if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js"));
 }
 
-bindGlobalScopeTabs();
+bindScopeBar();
 render();

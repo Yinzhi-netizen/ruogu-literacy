@@ -418,6 +418,26 @@ h1 {
   box-shadow: 0 2px 8px rgba(91, 124, 181, .25);
 }
 
+/* 范围选择栏：年级 → 册 → 单元 → 课文，逐级一行 */
+.scope-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  margin-bottom: 6px;
+}
+
+.scope-tab.grade-tab {
+  font-size: 17px;
+  padding: 6px 26px;
+}
+
+.scope-tab.unit-tab,
+.scope-tab.lesson-tab {
+  font-size: 13px;
+  padding: 3px 12px;
+}
+
 /* ---- Stage row ---- */
 /* 用 flex column 而不是 grid：绕开 iPad Safari 切换关卡时 grid 行高缓存 bug。
    .stage 原本 display:grid，切到阅读关再切回时行高不重新计算，会把 .challenge
