@@ -785,7 +785,8 @@ function bindScopeBar() {
     const sel = e.target.closest(".scope-select");
     if (!sel) return;
     cancelExam(); // 换范围即退出测试
-    const { level, value } = sel.dataset;
+    const level = sel.dataset.level;
+    const value = sel.value; // 选中值在 option 上，不在 select 的 dataset 里
     if (level === "scope") setScope(value || "全部");
     if (level === "unit") setUnit(value || null);
     if (level === "lesson") setLesson(value || null);
