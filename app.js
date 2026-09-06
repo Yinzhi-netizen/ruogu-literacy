@@ -47,6 +47,7 @@ let readingCursor = profile.readingCursor || 0;
 let readingCat = profile.readingCat || "recite";
 let readingInArticle = false;
 let dictWord = null;
+let dictCursor = -1;
 let duelExchangeFeedback = "每次兑换前会自动备份档案。";
 
 const stage = document.querySelector("#stage");
@@ -70,11 +71,39 @@ function currentWord() {
   return words[cursor % words.length] || words[0];
 }
 
+// 一年级复习用智能加权：没见过的多出现，错过的优先回来，该复习的插队，已掌握的偶尔抽查
+function wordWeight(item, slot) {
+  const p = (STATE.active().proficiency || {})[item.word];
+  if (!p) return 5; // 没见过
+  if ((p.read.errors || 0) > 0 || (p.write.errors || 0) > 0) return 8; // 错过，优先回来
+  const s = slot === "write" ? p.write : p.read;
+  if (!s.lastSeen) return 5;
+  if ((Date.now() - s.lastSeen) / 86400000 > 7) return 6; // 超过 7 天没见，该复习了
+  if (!s.mastered) return 4; // 见过但还没掌握
+  return 1; // 已掌握，偶尔抽查
+}
+
+function weightedIndex(pool, currentIdx, slot) {
+  const weights = pool.map((w, i) => (i === currentIdx ? 0 : wordWeight(w, slot)));
+  const total = weights.reduce((a, b) => a + b, 0);
+  if (total <= 0) return (currentIdx + 1) % pool.length;
+  let r = Math.random() * total;
+  for (let i = 0; i < pool.length; i++) {
+    r -= weights[i];
+    if (r <= 0) return i;
+  }
+  return (currentIdx + 1) % pool.length;
+}
+
 function nextWord() {
   if (words.length <= 1) { cursor = 0; persist(); return; }
-  let next = cursor;
-  while (next === cursor) next = Math.floor(Math.random() * words.length);
-  cursor = next;
+  if (grade === "二年级") {
+    // 二年级是新课复习：按课文顺序循环，接着上次的位置走
+    cursor = (cursor + 1) % words.length;
+  } else {
+    // 一年级是旧知复习：智能加权抽题
+    cursor = weightedIndex(words, cursor, "read");
+  }
   persist();
 }
 
@@ -82,6 +111,7 @@ function rebuildWords() {
   words = DATA.buildWordTable(grade, scope, unit, lesson);
   cursor = 0;
   dictWord = null;
+  dictCursor = -1;
   persist();
 }
 
@@ -131,11 +161,18 @@ function dictationPool() {
 
 function pickDictWord() {
   const pool = dictationPool();
-  if (!pool.length) { dictWord = null; return; }
-  if (pool.length === 1) { dictWord = pool[0]; return; }
-  let next = dictWord;
-  while (next === dictWord) next = pool[Math.floor(Math.random() * pool.length)];
-  dictWord = next;
+  if (!pool.length) { dictWord = null; dictCursor = -1; return; }
+  if (grade === "二年级") {
+    // 二年级新课：按课文顺序循环
+    dictCursor = (dictCursor + 1) % pool.length;
+    dictWord = pool[dictCursor];
+    return;
+  }
+  if (pool.length === 1) { dictCursor = 0; dictWord = pool[0]; return; }
+  // 一年级：智能加权（按会写熟练度）
+  const currentIdx = dictWord ? pool.indexOf(dictWord) : -1;
+  dictCursor = weightedIndex(pool, currentIdx, "write");
+  dictWord = pool[dictCursor];
 }
 
 function currentDictWord() {
