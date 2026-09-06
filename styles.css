@@ -418,7 +418,7 @@ h1 {
   box-shadow: 0 2px 8px rgba(91, 124, 181, .25);
 }
 
-/* 范围选择栏：年级 → 册 → 单元 → 课文，逐级一行 */
+/* 范围选择栏：年级徽章 + 册/单元/课文下拉，一行排开 */
 .scope-row {
   display: flex;
   flex-wrap: wrap;
@@ -427,15 +427,42 @@ h1 {
   margin-bottom: 6px;
 }
 
-.scope-tab.grade-tab {
-  font-size: 17px;
-  padding: 6px 26px;
+.scope-select-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 8px;
 }
 
-.scope-tab.unit-tab,
-.scope-tab.lesson-tab {
+.grade-badge {
+  font-weight: 900;
+  font-size: 16px;
+  color: #fff;
+  background: var(--primary);
+  border-radius: 999px;
+  padding: 6px 18px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .2);
+}
+
+.scope-select {
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 800;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, .88);
+  color: var(--ink);
+  max-width: 46vw;
+}
+
+.grade-switch {
   font-size: 13px;
-  padding: 3px 12px;
+  font-weight: 800;
+  color: var(--muted);
+  text-decoration: underline;
 }
 
 /* ---- 考试模式 ---- */

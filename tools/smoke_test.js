@@ -38,9 +38,11 @@ setTimeout(() => {
   console.log("星星数(totalStars):", p.totalStars);
   console.log("grade:", p.grade, "scope:", p.scope);
   const h = scopeBar.innerHTML;
-  console.log("scopeBar含年级tab:", h.includes("一年级") && h.includes("二年级"));
-  console.log("scopeBar含册tab:", h.includes("上册") && h.includes("下册"));
-  console.log("scopeBar含单元行:", h.includes("全部单元"));
+  console.log("scopeBar含年级徽章:", h.includes('grade-badge">一年级'));
+  console.log("scopeBar不再列年级tab:", !h.includes('data-value="二年级"'));
+  console.log("scopeBar含册下拉:", h.includes('data-level="scope"') && h.includes("上册") && h.includes("下册"));
+  console.log("scopeBar含单元下拉:", h.includes("全部单元"));
+  console.log("scopeBar含换年级链接:", h.includes("换年级"));
   console.log("stage已渲染:", stage.innerHTML.length > 0);
   // 阅读关（模拟切到 reading 会经过 render()，这里直接验证数据层）
   const D = window.RUOGU_WORD_DATA;

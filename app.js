@@ -85,15 +85,6 @@ function rebuildWords() {
   persist();
 }
 
-function setGrade(newGrade) {
-  if (grade === newGrade) return;
-  grade = newGrade;
-  scope = "全部";
-  unit = null;
-  lesson = null;
-  rebuildWords();
-}
-
 function setScope(newScope) {
   scope = newScope;
   unit = null;
@@ -743,41 +734,34 @@ function renderStoryReader(cat, item, index) {
   });
 }
 
-// ===== 范围选择栏（年级 → 册 → 单元 → 课文）=====
+// ===== 范围选择栏（年级在首页选好，这里用下拉：册 → 单元 → 课文）=====
 function renderScopeBar() {
   const bar = document.querySelector("#scopeBar");
   if (!bar) return;
 
-  const chip = (level, value, label, active, cls) =>
-    `<button class="scope-tab ${cls || ""} ${active ? "active" : ""}" data-level="${level}" data-value="${value}">${label}</button>`;
-
-  let html = `<div class="scope-row">${
-    DATA.grades().map((g) => chip("grade", g, g, g === grade, "grade-tab")).join("")
-  }</div>`;
-
   const vols = DATA.volsOf(grade);
-  if (vols.length > 1) {
-    if (!vols.includes(scope)) scope = "全部";
-    html += `<div class="scope-row">${
-      vols.map((v) => chip("scope", v, v, v === scope)).join("")
-    }</div>`;
-  }
-
+  if (scope !== "全部" && !vols.includes(scope)) scope = "全部";
   const units = DATA.unitsOf(grade, scope);
-  if (units.length) {
-    if (unit && !units.includes(unit)) { unit = null; lesson = null; }
-    html += `<div class="scope-row">${
-      chip("unit", "", "全部单元", !unit) + units.map((u) => chip("unit", u, u, u === unit, "unit-tab")).join("")
-    }</div>`;
-  }
+  if (unit && !units.includes(unit)) { unit = null; lesson = null; }
+  const lessons = unit ? DATA.lessonsOf(grade, scope, unit) : [];
+  if (lesson && !lessons.includes(lesson)) lesson = null;
 
-  if (unit) {
-    const lessons = DATA.lessonsOf(grade, scope, unit);
-    if (lesson && !lessons.includes(lesson)) lesson = null;
-    html += `<div class="scope-row">${
-      chip("lesson", "", "全部课文", !lesson) + lessons.map((l) => chip("lesson", l, l, l === lesson, "lesson-tab")).join("")
-    }</div>`;
-  }
+  const opts = (list, current, allLabel) =>
+    [`<option value="">${allLabel}</option>`]
+      .concat(list.map((v) => `<option value="${v}" ${v === current ? "selected" : ""}>${v}</option>`))
+      .join("");
+
+  let html = `<div class="scope-select-row">
+    <span class="grade-badge">${grade}</span>
+    ${vols.length > 1
+      ? `<select class="scope-select" data-level="scope" aria-label="选择册">${opts(vols.filter((v) => v !== "全部"), scope === "全部" ? "" : scope, "全部（上册+下册）")}</select>`
+      : ""}
+    <select class="scope-select" data-level="unit" aria-label="选择单元">${opts(units, unit, "全部单元")}</select>
+    ${unit
+      ? `<select class="scope-select" data-level="lesson" aria-label="选择课文">${opts(lessons, lesson, "全部课文")}</select>`
+      : ""}
+    <a class="grade-switch" href="./home.html">换年级</a>
+  </div>`;
 
   // 选中具体课文后出现测试入口
   if (examAvailable()) {
@@ -796,12 +780,13 @@ function bindScopeBar() {
   bar.addEventListener("click", (e) => {
     const examBtn = e.target.closest("[data-action='startExam']");
     if (examBtn) { startExam(); return; }
-    const btn = e.target.closest(".scope-tab");
-    if (!btn) return;
+  });
+  bar.addEventListener("change", (e) => {
+    const sel = e.target.closest(".scope-select");
+    if (!sel) return;
     cancelExam(); // 换范围即退出测试
-    const { level, value } = btn.dataset;
-    if (level === "grade") setGrade(value);
-    if (level === "scope") setScope(value);
+    const { level, value } = sel.dataset;
+    if (level === "scope") setScope(value || "全部");
     if (level === "unit") setUnit(value || null);
     if (level === "lesson") setLesson(value || null);
     render();
