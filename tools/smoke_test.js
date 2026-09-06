@@ -15,6 +15,7 @@ const stage = makeEl();
 global.window = global;
 global.localStorage = { _m: {}, getItem(k) { return this._m[k] ?? null; }, setItem(k, v) { this._m[k] = String(v); }, removeItem(k) { delete this._m[k]; } };
 global.navigator = {};
+global.location = { search: "" };
 global.requestAnimationFrame = (fn) => fn();
 global.document = {
   querySelector(sel) {

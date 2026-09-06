@@ -32,6 +32,8 @@
         </article>`;
       return;
     }
+    // 测试模式：没有看答案/重写，不会只能跳过，结果计入评分
+    const examMode = Boolean(handlers && handlers.examMode);
     const apiReady = hasApiKey();
     const n = Math.max(1, word.word.length);   // 字数 = 田字格数
     const cell = 360;
@@ -45,7 +47,7 @@
     ).join("");
     stage.innerHTML = `
       <article class="challenge dictation-card">
-        <div class="level-badge">听写关 · +10 星</div>
+        <div class="level-badge">${examMode ? "测试 · 听写题" : "听写关 · +10 星"}</div>
         <button class="target listen-target" data-action="speak"><img src="./assets/icons/icon_speak.png" alt="" class="speak-icon"><span>听词语</span></button>
         <div class="dictation-pinyin py">${word.pinyin}</div>
         <div class="pad-zone${multiClass}">
@@ -61,7 +63,9 @@
         <div class="actions three-actions">
           <button class="soft-button" data-action="undo" disabled>↩ 撤销上一笔</button>
           <button class="soft-button" data-action="clear">全部擦掉</button>
-          <button class="soft-button" data-action="peekAnswer">👀 看答案</button>
+          ${examMode
+            ? `<button class="soft-button" data-action="examSkip">不会，下一题 →</button>`
+            : `<button class="soft-button" data-action="peekAnswer">👀 看答案</button>`}
         </div>
         <div class="actions single-action">
           <button class="primary-button" data-action="submitOcr">提交识别</button>
@@ -74,7 +78,9 @@
         ${apiReady
           ? `<button class="ocr-toggle ocr-toggle-mini" data-action="toggleOcrSettings" title="修改 API Key">⚙️</button>`
           : `<button class="ocr-toggle" data-action="toggleOcrSettings">⚙️ 设置 API Key（首次使用）</button>`}
-        <div class="feedback">听词语，在方框里手写这个词。写错一个字，点那一格下面的「擦」就行。</div>
+        <div class="feedback">${examMode
+          ? "测试中没有提示哦。听词语，写出来，写完点「提交识别」。"
+          : "听词语，在方框里手写这个词。写错一个字，点那一格下面的「擦」就行。"}</div>
       </article>
     `;
     setupHandwritingPad(stage, word, handlers);
@@ -298,21 +304,30 @@
     stage.querySelector("[data-action='speak']").addEventListener("click", playPrompt);
     stage.querySelector("[data-action='clear']").addEventListener("click", clearPad);
 
-    // 看答案：不给星
-    stage.querySelector("[data-action='peekAnswer']").addEventListener("click", () => {
-      ocrStatus.hidden = false;
-      ocrStatus.className = "ocr-status ocr-warn";
-      ocrStatus.innerHTML = `
-        <div class="fallback-check">
-          <p>正确答案：<strong style="font-size:28px;">${word.word}</strong> <span class="py">（${word.pinyin}）</span></p>
-          <p class="hit-hint">看过答案就换一个吧，这一次不算得星哦。</p>
-          <div class="actions two-actions">
-            <button class="primary-button" data-action="peekNext">换一个词</button>
+    // 看答案：不给星（测试模式没有这个按钮，换成「不会，下一题」）
+    const peekBtn = stage.querySelector("[data-action='peekAnswer']");
+    if (peekBtn) {
+      peekBtn.addEventListener("click", () => {
+        ocrStatus.hidden = false;
+        ocrStatus.className = "ocr-status ocr-warn";
+        ocrStatus.innerHTML = `
+          <div class="fallback-check">
+            <p>正确答案：<strong style="font-size:28px;">${word.word}</strong> <span class="py">（${word.pinyin}）</span></p>
+            <p class="hit-hint">看过答案就换一个吧，这一次不算得星哦。</p>
+            <div class="actions two-actions">
+              <button class="primary-button" data-action="peekNext">换一个词</button>
+            </div>
           </div>
-        </div>
-      `;
-      stage.querySelector("[data-action='peekNext']").addEventListener("click", () => handlers.onPickNext());
-    });
+        `;
+        stage.querySelector("[data-action='peekNext']").addEventListener("click", () => handlers.onPickNext());
+      });
+    }
+
+    // 测试模式：不会只能跳过，这题算错
+    const examSkipBtn = stage.querySelector("[data-action='examSkip']");
+    if (examSkipBtn) {
+      examSkipBtn.addEventListener("click", () => handlers.onPickNext());
+    }
 
     // OCR 设置
     stage.querySelector("[data-action='toggleOcrSettings']").addEventListener("click", () => {
@@ -436,6 +451,22 @@
       return;
     }
 
+    // 测试模式：不能重写也不能看答案，这题算错直接下一题
+    if (handlers.examMode) {
+      ocrStatus.className = "ocr-status ocr-warn";
+      ocrStatus.innerHTML = `
+        <div class="fallback-check">
+          <p>识别结果：<strong>${cleaned || "（空白）"}</strong></p>
+          <p class="hit-hint">测试里没有重写机会哦，这题算错，考完评估里会看到它。</p>
+          <div class="actions single-action">
+            <button class="primary-button" data-action="examFailNext">知道了，下一题 →</button>
+          </div>
+        </div>
+      `;
+      stage.querySelector("[data-action='examFailNext']").addEventListener("click", () => handlers.onPickNext());
+      return;
+    }
+
     // 没写对：记录一次会写错误，只能重写或看答案
     if (handlers.onError) handlers.onError(word);
     const hitCount = cleaned ? [...new Set(target)].filter((c) => cleaned.includes(c)).length : 0;
@@ -459,6 +490,28 @@
     const ocrStatus = stage.querySelector(".ocr-status");
     ocrStatus.hidden = false;
     ocrStatus.className = "ocr-status ocr-warn";
+
+    // 测试模式离线：只留诚实自评两个出口，不能重写、不能提前看答案
+    if (handlers.examMode) {
+      ocrStatus.innerHTML = `
+        <div class="fallback-check">
+          <p>${reasonText}若谷自己对一下：</p>
+          <p>要写的是「<strong style="font-size:28px;">${word.word}</strong>」<span class="py">（${word.pinyin}）</span></p>
+          <div class="actions two-actions">
+            <button class="soft-button" data-action="examFailNext">没写对，下一题 →</button>
+            <button class="primary-button" data-action="manualPass">我写对了</button>
+          </div>
+          <p class="hit-hint">点「我写对了」要诚实哦～写对了才点。</p>
+        </div>
+      `;
+      const passBtn = stage.querySelector("[data-action='manualPass']");
+      if (passBtn) {
+        passBtn.addEventListener("click", () => handlers.onSuccess(word, "听写成功（离线自评）"));
+      }
+      stage.querySelector("[data-action='examFailNext']").addEventListener("click", () => handlers.onPickNext());
+      return;
+    }
+
     ocrStatus.innerHTML = `
       <div class="fallback-check">
         <p>${reasonText}若谷自己对一下：</p>

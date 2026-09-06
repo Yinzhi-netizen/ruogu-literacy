@@ -24,9 +24,19 @@ let mode = "recognize";
 // 出题范围四级：年级 → 册 → 单元 → 课文（旧存档只有 scope，自动落在一年级，行为不变）
 let grade = profile.grade || "一年级";
 if (!DATA.grades().includes(grade)) grade = DATA.grades()[0] || "一年级";
+// 从首页进入时带年级参数（home.html → game.html?grade=二年级）
+const urlGrade = new URLSearchParams(location.search).get("grade");
+const urlGradeValid = urlGrade && DATA.grades().includes(urlGrade);
 let scope = profile.scope || "全部";
 let unit = profile.unit || null;
 let lesson = profile.lesson || null;
+// URL 指定了年级则切换到该年级全部范围，并写回档案
+if (urlGradeValid && urlGrade !== grade) {
+  grade = urlGrade;
+  scope = "全部";
+  unit = null;
+  lesson = null;
+}
 // 校验存档里的范围选择仍然有效（跨年级/单元调整后可能失效）
 if (scope !== "全部" && !DATA.volsOf(grade).includes(scope)) scope = "全部";
 if (unit && !DATA.unitsOf(grade, scope).includes(unit)) { unit = null; lesson = null; }
@@ -253,8 +263,8 @@ function renderDictation() {
   });
 }
 
-// ===== 考试模式（按课文）=====
-// 选了具体课文后可开考：会认词出「看词选拼音」，会写词出手写听写，每题限时 120 秒
+// ===== 测试模式（按课文）=====
+// 选了具体课文后可开测：会认词出「看词选拼音」，会写词出手写听写，每题限时 120 秒
 const EXAM_SECONDS = 120;
 let exam = null;
 // exam = { lesson, questions:[{word,pinyin,isWrite}], idx, results:[{word,isWrite,ok,reason}], timerId, deadline, startedAt }
@@ -323,13 +333,14 @@ function renderExamCover() {
   const totalW = exam.questions.filter((q) => q.isWrite).length;
   stage.innerHTML = `
     <article class="exam-cover">
-      <div class="level-badge">考试 · 《${exam.lesson}》</div>
+      <div class="level-badge">测试 · 《${exam.lesson}》</div>
       <h2>《${exam.lesson}》小测验</h2>
       <div class="exam-rules">
         <p>📖 认读题 ${totalR} 道：看词语选拼音</p>
         <p>✍️ 听写题 ${totalW} 道：听语音写词语</p>
         <p>⏱ 每题限时 ${EXAM_SECONDS / 60} 分钟，超时不答算错</p>
-        <p>🏆 考完按正确率打分：60 分 +5 星 · 80 分 +10 星 · 满分 +15 星</p>
+        <p>🏆 测完按正确率打分：60 分 +5 星 · 80 分 +10 星 · 满分 +15 星</p>
+        <p>🔁 没测好可以再测一次</p>
       </div>
       <div class="actions two-actions">
         <button class="soft-button" data-action="backToGame">再复习一下</button>
@@ -356,9 +367,10 @@ function renderExamQuestion() {
     stage.innerHTML = `<article class="exam-box">${examHead()}<div id="examBody"></div></article>`;
     bindExamHead();
     DICT.renderDictation(stage.querySelector("#examBody"), q, {
+      examMode: true, // 测试：无看答案/无重写，识别不过只能下一题
       onSuccess: () => examAnswer(true, "写对了"),
-      onError: () => {}, // 考场里允许限时内重写，不打断计时
-      onPickNext: () => examAnswer(false, "跳过/看了答案")
+      onError: () => {},
+      onPickNext: () => examAnswer(false, "没写对/跳过")
     });
     return;
   }
@@ -441,11 +453,11 @@ function finishExam(quitEarly) {
     score >= 90 ? "🌟 优秀！差一点就满分啦！" :
     score >= 75 ? "👍 不错！把错题再看看就更好。" :
     score >= 60 ? "💪 及格了，错题再复习一遍吧。" :
-    "📖 先回去复习，准备好了再来考一次。";
+    "📖 先回去复习，准备好了再来测一次。";
 
   stage.innerHTML = `
     <article class="exam-result">
-      <div class="level-badge">考试结果 · 《${exam.lesson}》</div>
+      <div class="level-badge">测试评估 · 《${exam.lesson}》</div>
       <div class="exam-score ${score >= 80 ? "good" : score >= 60 ? "mid" : "low"}">${score}<small>分</small></div>
       <p class="exam-encourage">${encouragement}</p>
       <div class="exam-summary">
@@ -468,7 +480,7 @@ function finishExam(quitEarly) {
       ` : `<p class="exam-all-right">🎉 没有错题，全部答对！</p>`}
       <div class="actions two-actions">
         <button class="soft-button" data-action="backToGame">回到闯关</button>
-        <button class="primary-button" data-action="retryExam">再考一次</button>
+        <button class="primary-button" data-action="retryExam">再测一次</button>
       </div>
     </article>
   `;
@@ -767,11 +779,11 @@ function renderScopeBar() {
     }</div>`;
   }
 
-  // 选中具体课文后出现考试入口
+  // 选中具体课文后出现测试入口
   if (examAvailable()) {
     const wCount = words.filter((w) => w.isWrite).length;
     html += `<div class="scope-row exam-entry-row">
-      <button class="exam-entry-btn" data-action="startExam">📝 考《${lesson}》 · 认读 ${words.length - wCount} 题 + 听写 ${wCount} 题 · 每题 ${EXAM_SECONDS / 60} 分钟</button>
+      <button class="exam-entry-btn" data-action="startExam">📝 测试《${lesson}》 · 认读 ${words.length - wCount} 题 + 听写 ${wCount} 题 · 每题 ${EXAM_SECONDS / 60} 分钟</button>
     </div>`;
   }
 
@@ -786,7 +798,7 @@ function bindScopeBar() {
     if (examBtn) { startExam(); return; }
     const btn = e.target.closest(".scope-tab");
     if (!btn) return;
-    cancelExam(); // 换范围即退出考试
+    cancelExam(); // 换范围即退出测试
     const { level, value } = btn.dataset;
     if (level === "grade") setGrade(value);
     if (level === "scope") setScope(value);
@@ -820,7 +832,7 @@ function render() {
 // ===== 事件绑定 =====
 tabs.forEach((tab) => {
   tab.addEventListener("click", () => {
-    cancelExam(); // 切关卡即退出考试
+    cancelExam(); // 切关卡即退出测试
     mode = tab.dataset.mode;
     render();
   });

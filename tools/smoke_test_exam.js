@@ -64,6 +64,7 @@ localStorage.setItem("ruogu-literacy-profiles-v1", JSON.stringify({ activeId: "r
   proficiency: {}, completedReadings: { "recite::静夜思": true }, learnedAt: {}
 } } }));
 global.navigator = {};
+global.location = { search: "?grade=二年级" };
 global.requestAnimationFrame = (fn) => fn();
 global.document = {
   querySelector(sel) {
@@ -85,7 +86,7 @@ window.RUOGU_DICTATION = { renderDictation: (el, word, handlers) => handlers.onS
 
 setTimeout(() => {
   console.log("== 启动 ==");
-  console.log("考试入口出现:", scopeBar.innerHTML.includes("考《树之歌》"));
+  console.log("测试入口出现:", scopeBar.innerHTML.includes("测试《树之歌》"));
 
   // 点「考试」→ 封面 → 开始
   scopeBar._listeners.click[0]({ target: { closest: (s) => (s.includes("startExam") ? fakeBtn({}) : null) } });
@@ -106,7 +107,7 @@ setTimeout(() => {
   }
 
   console.log("== 结果 ==");
-  console.log("出分页面:", stage.innerHTML.includes("考试结果"));
+  console.log("出分页面:", stage.innerHTML.includes("测试评估"));
   console.log("满分 100:", stage.innerHTML.includes(">100<"));
   const p = window.RUOGU_STATE.active();
   console.log("星星 77 + 15 =", p.totalStars, p.totalStars === 92 ? "✓" : "✗");
