@@ -757,9 +757,9 @@ function renderScopeBar() {
       ? `<select class="scope-select" data-level="scope" aria-label="选择册">${opts(vols.filter((v) => v !== "全部"), scope === "全部" ? "" : scope, "全部（上册+下册）")}</select>`
       : ""}
     <select class="scope-select" data-level="unit" aria-label="选择单元">${opts(units, unit, "全部单元")}</select>
-    ${unit
-      ? `<select class="scope-select" data-level="lesson" aria-label="选择课文">${opts(lessons, lesson, "全部课文")}</select>`
-      : ""}
+    <select class="scope-select" data-level="lesson" aria-label="选择课文" ${unit ? "" : "disabled"}>${
+      unit ? opts(lessons, lesson, "全部课文") : '<option value="">← 先选单元</option>'
+    }</select>
     <a class="grade-switch" href="./home.html">换年级</a>
   </div>`;
 

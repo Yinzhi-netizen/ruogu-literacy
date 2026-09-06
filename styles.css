@@ -458,6 +458,10 @@ h1 {
   max-width: 46vw;
 }
 
+.scope-select:disabled {
+  opacity: .55;
+}
+
 .grade-switch {
   font-size: 13px;
   font-weight: 800;
