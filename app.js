@@ -253,6 +253,238 @@ function renderDictation() {
   });
 }
 
+// ===== 考试模式（按课文）=====
+// 选了具体课文后可开考：会认词出「看词选拼音」，会写词出手写听写，每题限时 120 秒
+const EXAM_SECONDS = 120;
+let exam = null;
+// exam = { lesson, questions:[{word,pinyin,isWrite}], idx, results:[{word,isWrite,ok,reason}], timerId, deadline, startedAt }
+
+function examAvailable() {
+  return Boolean(lesson) && words.length > 0;
+}
+
+function startExam() {
+  if (!examAvailable()) return;
+  const recognize = DATA.shuffle(words.filter((w) => !w.isWrite && w.pinyin));
+  const write = DATA.shuffle(words.filter((w) => w.isWrite));
+  exam = {
+    lesson,
+    questions: [...recognize, ...write],
+    idx: 0,
+    results: [],
+    timerId: null,
+    deadline: 0,
+    startedAt: 0
+  };
+  renderExamCover();
+}
+
+function cancelExam() {
+  if (!exam) return;
+  if (exam.timerId) clearInterval(exam.timerId);
+  exam = null;
+}
+
+function examHead() {
+  const left = Math.max(0, Math.ceil((exam.deadline - Date.now()) / 1000));
+  const pct = Math.max(0, Math.min(100, (left / EXAM_SECONDS) * 100));
+  return `
+    <div class="exam-head">
+      <span class="exam-progress">第 ${exam.idx + 1} / ${exam.questions.length} 题</span>
+      <div class="exam-timer ${left <= 30 ? "urgent" : ""}">
+        <div class="exam-timer-bar" style="width:${pct}%"></div>
+        <span class="exam-timer-text">${left}s</span>
+      </div>
+      <button class="soft-button exam-quit" data-action="quitExam">交卷退出</button>
+    </div>
+  `;
+}
+
+function examTick() {
+  const bar = stage.querySelector(".exam-timer-bar");
+  const text = stage.querySelector(".exam-timer-text");
+  const timer = stage.querySelector(".exam-timer");
+  if (!bar || !exam) return;
+  const left = Math.max(0, Math.ceil((exam.deadline - Date.now()) / 1000));
+  bar.style.width = `${(left / EXAM_SECONDS) * 100}%`;
+  if (text) text.textContent = `${left}s`;
+  if (timer) timer.classList.toggle("urgent", left <= 30);
+  if (left <= 0) examAnswer(false, "超时未答");
+}
+
+function examStartTimer() {
+  if (exam.timerId) clearInterval(exam.timerId);
+  exam.deadline = Date.now() + EXAM_SECONDS * 1000;
+  exam.timerId = setInterval(examTick, 500);
+}
+
+function renderExamCover() {
+  const totalR = exam.questions.filter((q) => !q.isWrite).length;
+  const totalW = exam.questions.filter((q) => q.isWrite).length;
+  stage.innerHTML = `
+    <article class="exam-cover">
+      <div class="level-badge">考试 · 《${exam.lesson}》</div>
+      <h2>《${exam.lesson}》小测验</h2>
+      <div class="exam-rules">
+        <p>📖 认读题 ${totalR} 道：看词语选拼音</p>
+        <p>✍️ 听写题 ${totalW} 道：听语音写词语</p>
+        <p>⏱ 每题限时 ${EXAM_SECONDS / 60} 分钟，超时不答算错</p>
+        <p>🏆 考完按正确率打分：60 分 +5 星 · 80 分 +10 星 · 满分 +15 星</p>
+      </div>
+      <div class="actions two-actions">
+        <button class="soft-button" data-action="backToGame">再复习一下</button>
+        <button class="primary-button" data-action="beginExam">我准备好了，开始！</button>
+      </div>
+    </article>
+  `;
+  stage.querySelector("[data-action='beginExam']").addEventListener("click", () => {
+    exam.startedAt = Date.now();
+    renderExamQuestion();
+  });
+  stage.querySelector("[data-action='backToGame']").addEventListener("click", () => {
+    cancelExam();
+    render();
+  });
+}
+
+function renderExamQuestion() {
+  if (!exam || exam.idx >= exam.questions.length) { finishExam(); return; }
+  const q = exam.questions[exam.idx];
+  examStartTimer();
+
+  if (q.isWrite) {
+    stage.innerHTML = `<article class="exam-box">${examHead()}<div id="examBody"></div></article>`;
+    bindExamHead();
+    DICT.renderDictation(stage.querySelector("#examBody"), q, {
+      onSuccess: () => examAnswer(true, "写对了"),
+      onError: () => {}, // 考场里允许限时内重写，不打断计时
+      onPickNext: () => examAnswer(false, "跳过/看了答案")
+    });
+    return;
+  }
+
+  const options = pinyinOptions(q);
+  stage.innerHTML = `
+    <article class="exam-box">
+      ${examHead()}
+      <div class="exam-body">
+        <div class="exam-type-badge">认读题 · 选出正确读音</div>
+        <div class="big-word big-word-phrase">${q.word}</div>
+        <div class="option-grid">
+          ${options.map((option) => `<button class="option pinyin-option" data-pinyin="${option}">${option}</button>`).join("")}
+        </div>
+      </div>
+    </article>
+  `;
+  bindExamHead();
+  stage.querySelectorAll(".pinyin-option").forEach((button) => {
+    button.addEventListener("click", () => {
+      examAnswer(button.dataset.pinyin === q.pinyin, button.dataset.pinyin === q.pinyin ? "答对了" : "选错了");
+    });
+  });
+}
+
+function bindExamHead() {
+  const quit = stage.querySelector("[data-action='quitExam']");
+  if (quit) {
+    quit.addEventListener("click", () => {
+      finishExam(true);
+    });
+  }
+}
+
+function examAnswer(ok, reason) {
+  if (!exam || exam.idx >= exam.questions.length) return;
+  const q = exam.questions[exam.idx];
+  if (q._answered) return; // 防止超时与点击同时触发
+  q._answered = true;
+  if (exam.timerId) { clearInterval(exam.timerId); exam.timerId = null; }
+  exam.results.push({ word: q.word, pinyin: q.pinyin, isWrite: q.isWrite, ok, reason });
+  // 结果写入熟练度档案（与平时闯关一致）
+  if (q.isWrite) {
+    if (ok) PROGRESS.recordWriteSuccess(q.word); else PROGRESS.recordError(q.word, "write");
+  } else {
+    if (ok) PROGRESS.recordReadSuccess(q.word); else PROGRESS.recordError(q.word, "read");
+  }
+  exam.idx += 1;
+  renderExamQuestion();
+}
+
+function examStars(score) {
+  if (score >= 100) return 15;
+  if (score >= 80) return 10;
+  if (score >= 60) return 5;
+  return 0;
+}
+
+function finishExam(quitEarly) {
+  if (!exam) return;
+  if (exam.timerId) { clearInterval(exam.timerId); exam.timerId = null; }
+  const done = exam.results.length;
+  const total = exam.questions.length;
+  const correct = exam.results.filter((r) => r.ok).length;
+  const score = done ? Math.round((correct / total) * 100) : 0;
+  const seconds = Math.max(1, Math.round(((exam.startedAt ? Date.now() - exam.startedAt : 0)) / 1000));
+  const wrong = exam.results.filter((r) => !r.ok);
+  const missed = exam.questions.slice(done); // 提前交卷未答的题
+
+  // 分数星星奖励（提前交卷不给）
+  const stars = quitEarly ? 0 : examStars(score);
+  if (stars > 0) {
+    const p = STATE.active();
+    p.totalStars = (p.totalStars || 0) + stars;
+    STATE.save();
+  }
+
+  const encouragement =
+    score >= 100 ? "🏆 满分！太厉害了！" :
+    score >= 90 ? "🌟 优秀！差一点就满分啦！" :
+    score >= 75 ? "👍 不错！把错题再看看就更好。" :
+    score >= 60 ? "💪 及格了，错题再复习一遍吧。" :
+    "📖 先回去复习，准备好了再来考一次。";
+
+  stage.innerHTML = `
+    <article class="exam-result">
+      <div class="level-badge">考试结果 · 《${exam.lesson}》</div>
+      <div class="exam-score ${score >= 80 ? "good" : score >= 60 ? "mid" : "low"}">${score}<small>分</small></div>
+      <p class="exam-encourage">${encouragement}</p>
+      <div class="exam-summary">
+        <span>答对 <strong>${correct}</strong> / ${total}</span>
+        <span>用时 ${Math.floor(seconds / 60)}分${seconds % 60}秒</span>
+        ${quitEarly ? `<span>提前交卷，${missed.length} 题未答</span>` : ""}
+        ${stars > 0 ? `<span class="exam-stars-gain">+${stars} ★</span>` : ""}
+      </div>
+      ${wrong.length ? `
+        <div class="exam-wrong-box">
+          <h3>错题清单（${wrong.length}）</h3>
+          ${wrong.map((r) => `
+            <div class="exam-wrong-item">
+              <strong>${r.word}</strong>
+              <span class="py">${r.pinyin || ""}</span>
+              <small>${r.isWrite ? "听写题" : "认读题"} · ${r.reason}</small>
+            </div>
+          `).join("")}
+        </div>
+      ` : `<p class="exam-all-right">🎉 没有错题，全部答对！</p>`}
+      <div class="actions two-actions">
+        <button class="soft-button" data-action="backToGame">回到闯关</button>
+        <button class="primary-button" data-action="retryExam">再考一次</button>
+      </div>
+    </article>
+  `;
+  if (stars > 0) UI.animateStarGain(stars, stage);
+  renderProgress();
+
+  stage.querySelector("[data-action='backToGame']").addEventListener("click", () => {
+    cancelExam();
+    render();
+  });
+  stage.querySelector("[data-action='retryExam']").addEventListener("click", () => {
+    cancelExam();
+    startExam();
+  });
+}
+
 // ===== 阅读关 =====
 const READING_CATS = [
   { key: "recite", icon: "📜", name: "必背课文", items: () => readingTexts.recite || [], annotate: false },
@@ -535,6 +767,14 @@ function renderScopeBar() {
     }</div>`;
   }
 
+  // 选中具体课文后出现考试入口
+  if (examAvailable()) {
+    const wCount = words.filter((w) => w.isWrite).length;
+    html += `<div class="scope-row exam-entry-row">
+      <button class="exam-entry-btn" data-action="startExam">📝 考《${lesson}》 · 认读 ${words.length - wCount} 题 + 听写 ${wCount} 题 · 每题 ${EXAM_SECONDS / 60} 分钟</button>
+    </div>`;
+  }
+
   bar.innerHTML = html;
 }
 
@@ -542,8 +782,11 @@ function bindScopeBar() {
   const bar = document.querySelector("#scopeBar");
   if (!bar) return;
   bar.addEventListener("click", (e) => {
+    const examBtn = e.target.closest("[data-action='startExam']");
+    if (examBtn) { startExam(); return; }
     const btn = e.target.closest(".scope-tab");
     if (!btn) return;
+    cancelExam(); // 换范围即退出考试
     const { level, value } = btn.dataset;
     if (level === "grade") setGrade(value);
     if (level === "scope") setScope(value);
@@ -577,6 +820,7 @@ function render() {
 // ===== 事件绑定 =====
 tabs.forEach((tab) => {
   tab.addEventListener("click", () => {
+    cancelExam(); // 切关卡即退出考试
     mode = tab.dataset.mode;
     render();
   });

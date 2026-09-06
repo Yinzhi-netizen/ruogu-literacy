@@ -1,4 +1,4 @@
-const cacheName = "ruogu-literacy-v36";
+const cacheName = "ruogu-literacy-v37";
 const assets = [
   "./",
   "./index.html",

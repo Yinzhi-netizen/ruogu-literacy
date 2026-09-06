@@ -438,6 +438,199 @@ h1 {
   padding: 3px 12px;
 }
 
+/* ---- 考试模式 ---- */
+.exam-entry-row {
+  margin-top: 2px;
+}
+
+.exam-entry-btn {
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 900;
+  padding: 8px 22px;
+  border-radius: 999px;
+  border: 2px solid #c9a84c;
+  background: linear-gradient(135deg, #f7e6b0, #e8c96a);
+  color: #5a4210;
+  cursor: pointer;
+  box-shadow: 0 3px 10px rgba(201, 168, 76, .35);
+}
+
+.exam-entry-btn:hover {
+  transform: translateY(-1px);
+}
+
+.exam-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.exam-progress {
+  font-weight: 900;
+  color: var(--muted, #7a6038);
+  white-space: nowrap;
+}
+
+.exam-timer {
+  flex: 1;
+  height: 20px;
+  background: rgba(255, 255, 255, .55);
+  border: 1px solid var(--line, #e3d5b8);
+  border-radius: 999px;
+  position: relative;
+  overflow: hidden;
+}
+
+.exam-timer-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #7a8b5e, #a8bd8a);
+  border-radius: 999px;
+  transition: width .5s linear;
+}
+
+.exam-timer.urgent .exam-timer-bar {
+  background: linear-gradient(90deg, #b8453a, #e0705f);
+}
+
+.exam-timer-text {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 900;
+  color: #3a2a1a;
+}
+
+.exam-quit {
+  white-space: nowrap;
+}
+
+.exam-body {
+  text-align: center;
+}
+
+.exam-type-badge {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 900;
+  color: var(--muted, #7a6038);
+  background: rgba(255, 255, 255, .6);
+  border-radius: 999px;
+  padding: 3px 14px;
+  margin-bottom: 10px;
+}
+
+.exam-cover,
+.exam-result {
+  text-align: center;
+  padding: 18px;
+}
+
+.exam-cover h2 {
+  font-family: var(--font-heading, inherit);
+  margin: 8px 0 14px;
+}
+
+.exam-rules {
+  display: inline-block;
+  text-align: left;
+  background: rgba(255, 255, 255, .55);
+  border: 1px solid var(--line, #e3d5b8);
+  border-radius: 12px;
+  padding: 12px 20px;
+  margin-bottom: 16px;
+}
+
+.exam-rules p {
+  margin: 6px 0;
+  font-weight: 800;
+}
+
+.exam-score {
+  font-size: 72px;
+  font-weight: 900;
+  font-family: var(--font-display, inherit);
+  line-height: 1.1;
+}
+
+.exam-score small {
+  font-size: 24px;
+  margin-left: 4px;
+}
+
+.exam-score.good { color: #2e7d32; }
+.exam-score.mid { color: #b8860b; }
+.exam-score.low { color: #b8453a; }
+
+.exam-encourage {
+  font-size: 18px;
+  font-weight: 900;
+  margin: 6px 0 12px;
+}
+
+.exam-summary {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+  font-weight: 800;
+  margin-bottom: 14px;
+}
+
+.exam-stars-gain {
+  color: #b8860b;
+  font-size: 18px;
+}
+
+.exam-wrong-box {
+  text-align: left;
+  background: rgba(255, 255, 255, .55);
+  border: 1px solid var(--line, #e3d5b8);
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin: 0 auto 16px;
+  max-width: 480px;
+}
+
+.exam-wrong-box h3 {
+  margin: 0 0 10px;
+  color: #b8453a;
+}
+
+.exam-wrong-item {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px dashed var(--line, #e3d5b8);
+}
+
+.exam-wrong-item:last-child {
+  border-bottom: none;
+}
+
+.exam-wrong-item strong {
+  font-size: 20px;
+}
+
+.exam-wrong-item .py {
+  color: #1f6f66;
+}
+
+.exam-wrong-item small {
+  margin-left: auto;
+  color: var(--muted, #7a6038);
+}
+
+.exam-all-right {
+  font-size: 18px;
+  font-weight: 900;
+  color: #2e7d32;
+}
+
 /* ---- Stage row ---- */
 /* 用 flex column 而不是 grid：绕开 iPad Safari 切换关卡时 grid 行高缓存 bug。
    .stage 原本 display:grid，切到阅读关再切回时行高不重新计算，会把 .challenge
