@@ -24,18 +24,30 @@ let mode = "recognize";
 // 出题范围四级：年级 → 册 → 单元 → 课文（旧存档只有 scope，自动落在一年级，行为不变）
 let grade = profile.grade || "一年级";
 if (!DATA.grades().includes(grade)) grade = DATA.grades()[0] || "一年级";
-// 从首页进入时带年级参数（home.html → game.html?grade=二年级）
-const urlGrade = new URLSearchParams(location.search).get("grade");
+// 从识字库进入时可带完整范围参数（年级 → 册 → 单元 → 课文）
+const urlParams = new URLSearchParams(location.search);
+const urlGrade = urlParams.get("grade");
 const urlGradeValid = urlGrade && DATA.grades().includes(urlGrade);
 let scope = profile.scope || "全部";
 let unit = profile.unit || null;
 let lesson = profile.lesson || null;
-// URL 指定了年级则切换到该年级全部范围，并写回档案
-if (urlGradeValid && urlGrade !== grade) {
+// URL 带完整范围时优先采用；仅带年级且年级未变时保留孩子上次停留的课文
+if (urlGradeValid) {
+  const gradeChanged = urlGrade !== grade;
+  const hasDetailedUrlScope = ["scope", "unit", "lesson"].some((key) => urlParams.has(key));
   grade = urlGrade;
-  scope = "全部";
-  unit = null;
-  lesson = null;
+  if (hasDetailedUrlScope) {
+    const urlScope = urlParams.get("scope");
+    scope = urlScope && DATA.volsOf(grade).includes(urlScope) ? urlScope : "全部";
+    const urlUnit = urlParams.get("unit");
+    unit = urlUnit && DATA.unitsOf(grade, scope).includes(urlUnit) ? urlUnit : null;
+    const urlLesson = urlParams.get("lesson");
+    lesson = urlLesson && DATA.lessonsOf(grade, scope, unit).includes(urlLesson) ? urlLesson : null;
+  } else if (gradeChanged) {
+    scope = "全部";
+    unit = null;
+    lesson = null;
+  }
 }
 // 校验存档里的范围选择仍然有效（跨年级/单元调整后可能失效）
 if (scope !== "全部" && !DATA.volsOf(grade).includes(scope)) scope = "全部";

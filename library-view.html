@@ -2,212 +2,415 @@
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>若谷一年级识字库 · 总览</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+    <meta name="theme-color" content="#4a5538" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="星河书旅·识字库" />
+    <title>若谷识字库 · 星河书旅</title>
     <link rel="stylesheet" href="./styles.css" />
     <style>
+      :root {
+        --primary: #7a8b5e;
+        --primary-deep: #4a5538;
+        --accent: #b8453a;
+      }
+      .page-bg {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+      }
+      .page-bg::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: rgba(26, 22, 20, .28);
+      }
+
       .lib-shell {
-        width: min(1000px, 100%);
+        width: min(980px, 100%);
+        min-height: 100vh;
         margin: 0 auto;
-        padding: 20px 18px 60px;
+        padding: max(18px, env(safe-area-inset-top)) 18px max(22px, env(safe-area-inset-bottom));
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
         position: relative;
         z-index: 1;
       }
-      .lib-head {
-        text-align: center;
-        margin-bottom: 18px;
+
+      .lib-header {
+        padding-bottom: 16px;
+        border-bottom: 1px solid rgba(212, 208, 197, .32);
       }
-      .lib-head h1 {
+
+      .lib-header a.back-home {
+        color: #c9a84c;
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 700;
+        margin-bottom: 8px;
+        display: inline-block;
+      }
+
+      .lib-header h1 {
+        margin: 8px 0 4px;
         font-family: var(--font-heading);
-        color: var(--accent);
+        font-size: clamp(32px, 5vw, 48px);
+        letter-spacing: 3px;
+        line-height: 1.1;
+        color: #ffe8b8;
       }
-      .lib-head p {
-        color: var(--muted);
-        font-weight: 800;
+
+      .lib-header p {
         margin: 6px 0 0;
+        color: #d4c9ae;
+        font-size: 13px;
+        font-weight: 700;
+        line-height: 1.5;
       }
+
+      /* 年级标签 */
       .vol-tabs {
-        display: flex;
-        gap: 10px;
-        justify-content: center;
-        margin: 18px 0;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+        margin: 16px 0;
+        padding: 7px;
+        border: 1px solid rgba(222, 207, 169, .7);
+        border-radius: 12px;
+        background: rgba(31, 28, 23, .9);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, .24);
       }
+
       .vol-tab {
-        padding: 10px 24px;
-        border-radius: 999px;
-        border: 2px solid var(--border-accent);
-        background: rgba(255, 255, 255, 0.7);
+        min-height: 48px;
+        padding: 10px 14px;
+        border-radius: 8px;
+        border: 1px solid #d6c8a7;
+        background: #f2ead8;
         font-family: var(--font-heading);
-        font-size: 18px;
+        font-size: 16px;
         font-weight: 900;
-        color: var(--ink);
+        color: #352d23;
         transition: all 0.2s ease;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, .9), 0 2px 6px rgba(0, 0, 0, .18);
+        cursor: pointer;
       }
+
+      .vol-tab:hover {
+        background: #fff8e8;
+        border-color: #ead69c;
+      }
+
       .vol-tab.active {
-        background: linear-gradient(135deg, var(--accent), #6b1010);
+        background: linear-gradient(180deg, #7f9160 0%, #53613f 100%);
+        border-color: #e1ca84;
         color: #fff;
-        box-shadow: 0 4px 12px var(--glow-red);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, .22), 0 3px 10px rgba(0, 0, 0, .28);
+        text-shadow: 0 1px 2px rgba(0, 0, 0, .45);
       }
+
+      .vol-tab:focus-visible,
+      .lesson-card.clickable:focus-visible,
+      .lesson-start:focus-visible {
+        outline: 3px solid #f4d789;
+        outline-offset: 3px;
+      }
+
+      /* 统计条 */
       .vol-stats {
         display: flex;
         gap: 12px;
-        justify-content: center;
         flex-wrap: wrap;
         margin-bottom: 20px;
       }
+
       .vol-stats .pill {
         padding: 8px 16px;
-        border-radius: 999px;
-        background: var(--panel);
-        border: 2px solid var(--border-card);
+        border-radius: 6px;
+        background: rgba(38, 35, 30, .82);
+        border: 1px solid rgba(222, 207, 169, .48);
         font-weight: 900;
-        box-shadow: var(--elevation-1);
+        color: #f4f2ed;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, .08);
       }
+
       .vol-stats .pill b {
-        color: var(--accent);
-        font-family: var(--font-display);
+        color: #c9a84c;
+        font-family: var(--font-ui);
         font-size: 22px;
+        margin-left: 4px;
       }
-      .lesson-card {
-        background: var(--panel);
-        border: 2px solid var(--border-card);
-        border-radius: 12px;
-        box-shadow: var(--elevation-2);
-        padding: 16px 18px;
-        margin-bottom: 14px;
-      }
-      .lesson-card h3 {
-        margin: 0 0 12px;
-        font-family: var(--font-heading);
-        font-size: 22px;
-        color: var(--accent);
+
+      /* 面包屑 */
+      .breadcrumb {
         display: flex;
         align-items: center;
         gap: 8px;
+        padding: 12px 0;
+        font-size: 13px;
+        font-weight: 800;
+        color: #b5a68e;
+        flex-wrap: wrap;
       }
-      .lesson-card h3 .idx {
-        font-size: 14px;
+
+      .breadcrumb a {
+        color: #f4d789;
+        text-decoration: none;
+        transition: all 0.2s ease;
+      }
+
+      .breadcrumb a:hover {
+        color: #ffead5;
+      }
+
+      .breadcrumb .sep {
+        color: rgba(212, 208, 197, .52);
+      }
+
+      .breadcrumb span:last-child {
+        color: #ffe8b8;
+      }
+
+      /* 卡片容器 */
+      .card-grid {
+        display: grid;
+        gap: 14px;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      }
+
+      /* 通用卡片 */
+      .lesson-card {
+        background: rgba(38, 35, 30, .86);
+        border: 1px solid rgba(222, 207, 169, .52);
+        border-radius: 10px;
+        box-shadow: 0 5px 16px rgba(0, 0, 0, .24);
+        padding: 18px 20px;
+        transition: all 0.2s ease;
+      }
+
+      .lesson-card h3 {
+        margin: 0 0 12px;
+        font-family: var(--font-heading);
+        font-size: 20px;
+        color: #ffe8b8;
+        letter-spacing: 1px;
+        line-height: 1.3;
+      }
+
+      .lesson-card .idx {
+        font-size: 13px;
         color: #fff;
-        background: var(--accent-2);
-        border-radius: 6px;
+        background: rgba(184, 74, 48, .75);
+        border-radius: 5px;
         padding: 2px 8px;
         font-family: var(--font-body);
+        margin-right: 6px;
       }
+
+      /* 可点击卡片 */
+      .clickable {
+        cursor: pointer;
+        width: 100%;
+        color: inherit;
+        font: inherit;
+        text-align: left;
+      }
+
+      .clickable:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(201, 168, 76, .28);
+        border-color: rgba(201, 168, 76, .65);
+        background: rgba(50, 46, 39, .94);
+      }
+
+      /* 单元/课文统计 */
+      .unit-stats {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        font-size: 13px;
+        font-weight: 800;
+        color: #d4c9ae;
+      }
+
+      .unit-stats span {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      /* 课文字词详情 */
       .char-row {
-        margin: 8px 0;
+        margin: 18px 0 0;
       }
+
       .char-row .label {
+        margin-bottom: 9px;
+        color: #e3d7bd;
         font-size: 14px;
         font-weight: 900;
-        color: var(--muted);
-        margin-bottom: 6px;
       }
+
       .char-grid {
         display: flex;
         flex-wrap: wrap;
-        gap: 6px;
+        gap: 8px;
       }
+
       .ch {
-        width: 44px;
-        height: 44px;
+        min-width: 46px;
+        min-height: 46px;
+        padding: 5px 10px;
         display: grid;
         place-items: center;
+        border: 1px solid #d8ccb2;
         border-radius: 8px;
+        background: #fffdf7;
+        color: #2f2922;
         font-family: var(--font-display);
-        font-size: 26px;
+        font-size: 24px;
         font-weight: 900;
-        background: #fff;
-        border: 1px solid var(--border-card);
-        color: var(--ink);
+        box-shadow: 0 2px 5px rgba(0, 0, 0, .18);
       }
-      .ch.write {
-        background: linear-gradient(180deg, #fff3bf, #f8edcf);
-        border: 2px solid var(--accent-2);
-        color: var(--accent);
-        box-shadow: 0 0 6px var(--glow-gold);
-      }
+
       .ch.wd {
         width: auto;
-        min-width: 44px;
-        padding: 0 10px;
         font-size: 20px;
       }
+
+      .ch.write {
+        border: 2px solid #d5a94f;
+        background: #fff1bd;
+        color: #7d2d25;
+      }
+
       .ch.empty {
-        color: #bbb;
-        font-size: 13px;
+        color: #8f8777;
       }
-      .legend {
+
+      .lesson-actions {
         display: flex;
-        gap: 16px;
-        justify-content: center;
-        margin-bottom: 16px;
-        font-size: 14px;
-        font-weight: 800;
-        color: var(--muted);
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 22px;
+        padding-top: 18px;
+        border-top: 1px solid rgba(222, 207, 169, .32);
       }
-      .legend span {
+
+      .lesson-start {
         display: inline-flex;
         align-items: center;
-        gap: 6px;
+        justify-content: center;
+        min-height: 46px;
+        padding: 10px 18px;
+        border: 1px solid #e1ca84;
+        border-radius: 8px;
+        background: linear-gradient(180deg, #b64d3d 0%, #863127 100%);
+        box-shadow: 0 3px 10px rgba(0, 0, 0, .24);
+        color: #fff8e8;
+        font-weight: 900;
+        text-decoration: none;
       }
-      .legend .swatch {
-        width: 18px;
-        height: 18px;
-        border-radius: 5px;
-        display: inline-block;
+
+      .lesson-actions small {
+        color: #cfc3aa;
+        font-weight: 700;
       }
+
+      /* 背诵区 */
       .recite-section {
         margin-top: 28px;
       }
+
       .recite-section > h2 {
         font-family: var(--font-heading);
-        color: var(--accent);
-        text-align: center;
+        color: #ffe8b8;
+        font-size: 22px;
+        letter-spacing: 2px;
+        margin-bottom: 16px;
       }
+
       .recite-card {
-        background: color-mix(in srgb, var(--accent-3) 16%, white);
-        border: 2px solid color-mix(in srgb, var(--accent-2) 22%, transparent);
-        border-radius: 12px;
-        padding: 14px 18px;
+        background: rgba(122, 139, 94, .22);
+        border: 1px solid rgba(122, 139, 94, .42);
+        border-radius: 10px;
+        padding: 16px 20px;
         margin-bottom: 12px;
       }
+
       .recite-card .rt-title {
         font-family: var(--font-heading);
-        font-size: 20px;
+        font-size: 18px;
         font-weight: 900;
-        color: var(--accent);
+        color: #e5f1c8;
       }
+
       .recite-card .rt-author {
-        font-size: 13px;
-        color: var(--muted);
+        font-size: 12px;
+        color: #c4b9a2;
         font-weight: 800;
         margin-left: 8px;
       }
+
       .recite-card .rt-text {
-        margin-top: 8px;
+        margin-top: 10px;
         font-family: var(--font-display);
-        font-size: 22px;
-        line-height: 1.7;
-        color: var(--ink);
+        font-size: 20px;
+        line-height: 1.8;
+        color: #ffe8b8;
       }
+
       .jjy-list {
         display: grid;
         gap: 8px;
       }
+
       .jjy-list div {
         font-family: var(--font-display);
-        font-size: 20px;
-        background: rgba(255, 255, 255, 0.7);
+        font-size: 18px;
+        background: rgba(255, 255, 255, .18);
         border-radius: 8px;
-        padding: 8px 14px;
-        border: 1px solid var(--border-card);
+        padding: 10px 16px;
+        border: 1px solid rgba(212, 208, 197, .32);
+        color: #ffe8b8;
       }
+
+      .legend {
+        display: none;
+      }
+
       .hidden { display: none; }
+
+      @media (max-width: 600px) {
+        .vol-tabs {
+          gap: 5px;
+          padding: 5px;
+        }
+
+        .vol-tab {
+          min-height: 44px;
+          padding: 8px 5px;
+          font-size: 14px;
+        }
+
+        .card-grid {
+          grid-template-columns: 1fr;
+        }
+      }
     </style>
   </head>
   <body>
+    <div class="page-bg" style="background-image: url('./assets/backgrounds/05_scholar_mountain_mobile.jpg');"></div>
     <main class="lib-shell">
-      <div class="lib-head">
+      <div class="lib-header">
+        <a class="back-home" href="./home.html">← 返回年级选择</a>
         <h1>若谷识字库</h1>
         <p>一年级依据统编版标准字表 · 二年级依据清澜山 G2 词语表 · 供对照课本核对</p>
       </div>
@@ -218,143 +421,477 @@
         <button class="vol-tab" data-vol="二上">二年级上册</button>
       </div>
 
-      <div class="legend">
-        <span><i class="swatch" style="background:#fff;border:1px solid #ccc;"></i> 会认字（看到能读）</span>
-        <span><i class="swatch" style="background:linear-gradient(180deg,#fff3bf,#c9972b);"></i> 会写字（要会写）</span>
-      </div>
-
       <div id="content"></div>
     </main>
 
     <script src="./grade1-library.js"></script>
+    <script src="./grade1-words.js"></script>
     <script src="./grade2-words.js"></script>
     <script>
       const content = document.querySelector("#content");
       const tabs = document.querySelectorAll(".vol-tab");
-      let vol = "上册";
 
       function uniq(list) {
         return [...new Set(list)];
       }
 
-      // 二年级上册：词表视图（会认词/会写词）
-      function renderG2() {
-        const units = (window.RUOGU_OCR_G2 || {})["上册"] || [];
-        let totalR = 0, totalW = 0, totalL = 0;
-        let html = "";
-
-        units.forEach((u) => {
-          u.lessons.forEach((l) => {
-            totalL++;
-            totalR += (l.recognize || []).length;
-            totalW += (l.write || []).length;
-            const rChips = (l.recognize || []).map((w) => `<div class="ch wd">${w}</div>`).join("") || `<div class="ch empty">—</div>`;
-            const wChips = (l.write || []).map((w) => `<div class="ch wd write">${w}</div>`).join("") || `<div class="ch empty">无</div>`;
-            html += `
-              <div class="lesson-card">
-                <h3><span class="idx">${u.unit}</span>《${l.title}》</h3>
-                <div class="char-row">
-                  <div class="label">会认词（${(l.recognize || []).length}）</div>
-                  <div class="char-grid">${rChips}</div>
-                </div>
-                <div class="char-row">
-                  <div class="label">会写词（${(l.write || []).length}）</div>
-                  <div class="char-grid">${wChips}</div>
-                </div>
-              </div>
-            `;
-          });
-          if (u.recite && u.recite.length) {
-            html += `<div class="recite-section"><h2>${u.unit} · 背诵篇目</h2><div class="jjy-list">`;
-            u.recite.forEach((r) => { html += `<div>${r}</div>`; });
-            html += `</div></div>`;
-          }
-        });
-
-        html = `
-          <div class="vol-stats">
-            <div class="pill">会认词 <b>${totalR}</b></div>
-            <div class="pill">会写词 <b>${totalW}</b></div>
-            <div class="pill">课文 <b>${totalL}</b></div>
-          </div>
-        ` + html;
-        content.innerHTML = html;
+      // 清理单元名：去掉"·阅读"、"·识字"等后缀
+      function cleanUnitName(unitName) {
+        return unitName.replace(/[·・].*$/, '');
       }
 
-      function renderVol(volName) {
-        if (volName === "二上") { renderG2(); return; }
-        const data = window.RUOGU_GRADE1[volName];
-        const allRecognize = uniq(data.lessons.flatMap((l) => l.recognize));
-        const allWrite = uniq(data.lessons.flatMap((l) => l.write));
+      // ========== 路由管理 ==========
+      function parseHash() {
+        const hash = window.location.hash.slice(1);
+        const params = new URLSearchParams(hash);
+        return {
+          grade: params.get("grade") || "上册",
+          unit: params.get("unit"),
+          lesson: params.get("lesson")
+        };
+      }
 
-        let html = `
-          <div class="vol-stats">
-            <div class="pill">会认字 <b>${allRecognize.length}</b></div>
-            <div class="pill">会写字 <b>${allWrite.length}</b></div>
-            <div class="pill">课文 <b>${data.lessons.length}</b></div>
-            <div class="pill">背诵篇目 <b>${data.recite.length}</b></div>
-          </div>
-        `;
+      function setHash(params) {
+        const search = new URLSearchParams();
+        if (params.grade) search.set("grade", params.grade);
+        if (params.unit) search.set("unit", params.unit);
+        if (params.lesson) search.set("lesson", params.lesson);
+        window.location.hash = search.toString();
+      }
 
-        data.lessons.forEach((l, i) => {
-          const writeSet = new Set(l.write);
-          // 会认字里把"也是会写"的标出来，其余普通会认；会写字单独再列一行
-          const recognizeChips = l.recognize.length
-            ? l.recognize.map((c) => `<div class="ch ${writeSet.has(c) ? "write" : ""}">${c}</div>`).join("")
-            : `<div class="ch empty">—</div>`;
-          const writeChips = l.write.length
-            ? l.write.map((c) => `<div class="ch write">${c}</div>`).join("")
-            : `<div class="ch empty">无</div>`;
+      function buildGameUrl(grade, unitName, lessonTitle) {
+        const params = new URLSearchParams();
+
+        if (grade === "二上") {
+          params.set("grade", "二年级");
+          params.set("scope", "上册");
+          params.set("unit", cleanUnitName(unitName));
+          params.set("lesson", lessonTitle);
+        } else {
+          params.set("grade", "一年级");
+          params.set("scope", grade);
+
+          const sourceUnits = (window.RUOGU_OCR || {})[grade] || [];
+          const sourceUnit = sourceUnits.find((u) =>
+            (u.lessons || []).some((l) => l.title === lessonTitle)
+          );
+          if (sourceUnit) {
+            params.set("unit", cleanUnitName(sourceUnit.unit));
+            params.set("lesson", lessonTitle);
+          }
+        }
+
+        return `./game.html?${params.toString()}`;
+      }
+
+      // ========== 数据获取 ==========
+      function getGradeData(grade) {
+        if (grade === "二上") {
+          return {
+            type: "g2",
+            units: (window.RUOGU_OCR_G2 || {})["上册"] || []
+          };
+        } else {
+          return {
+            type: "g1",
+            data: window.RUOGU_GRADE1[grade] || { lessons: [], recite: [], 日积月累: [] }
+          };
+        }
+      }
+
+      // ========== 面包屑导航 ==========
+      function renderBreadcrumb(route) {
+        const crumbs = [];
+        const gradeLabel = route.grade === "二上" ? "二年级上册" : route.grade === "上册" ? "一年级上册" : "一年级下册";
+
+        crumbs.push(`<a href="#grade=${route.grade}">${gradeLabel}</a>`);
+
+        if (route.unit) {
+          const unitDisplay = cleanUnitName(route.unit);
+          crumbs.push(`<a href="#grade=${route.grade}&unit=${encodeURIComponent(route.unit)}">${unitDisplay}</a>`);
+        }
+
+        if (route.lesson) {
+          crumbs.push(`<span>${route.lesson}</span>`);
+        }
+
+        return `<div class="breadcrumb">${crumbs.join(" <span class='sep'>›</span> ")}</div>`;
+      }
+
+      // ========== 渲染：单元列表页 ==========
+      function renderUnitList(grade) {
+        const gradeData = getGradeData(grade);
+        let html = "";
+
+        if (gradeData.type === "g2") {
+          // 二年级：按单元分组
+          const units = gradeData.units;
+          let totalR = 0, totalW = 0, totalL = 0;
+
+          units.forEach(u => {
+            u.lessons.forEach(l => {
+              totalL++;
+              totalR += (l.recognize || []).length;
+              totalW += (l.write || []).length;
+            });
+          });
+
+          html = `
+            <div class="vol-stats">
+              <div class="pill">会认词 <b>${totalR}</b></div>
+              <div class="pill">会写词 <b>${totalW}</b></div>
+              <div class="pill">课文 <b>${totalL}</b></div>
+            </div>
+            <div class="card-grid">
+          `;
+
+          units.forEach(u => {
+            const lessonCount = u.lessons.length;
+            const reciteCount = (u.recite || []).length;
+            let rCount = 0, wCount = 0;
+            u.lessons.forEach(l => {
+              rCount += (l.recognize || []).length;
+              wCount += (l.write || []).length;
+            });
+
+            html += `
+              <button type="button" class="lesson-card clickable" data-action="unit" data-grade="${grade}" data-unit="${u.unit}">
+                <h3>${cleanUnitName(u.unit)}</h3>
+                <div class="unit-stats">
+                  <span>📖 ${lessonCount} 篇课文</span>
+                  <span>👁️ ${rCount} 会认词</span>
+                  <span>✍️ ${wCount} 会写词</span>
+                  ${reciteCount ? `<span>📝 ${reciteCount} 背诵</span>` : ""}
+                </div>
+              </button>
+            `;
+          });
+
+          html += `</div>`;
+
+        } else {
+          // 一年级：没有单元概念，按课文序号分组（每10课一组）
+          const data = gradeData.data;
+          const allRecognize = uniq(data.lessons.flatMap((l) => l.recognize));
+          const allWrite = uniq(data.lessons.flatMap((l) => l.write));
+
+          html = `
+            <div class="vol-stats">
+              <div class="pill">会认字 <b>${allRecognize.length}</b></div>
+              <div class="pill">会写字 <b>${allWrite.length}</b></div>
+              <div class="pill">课文 <b>${data.lessons.length}</b></div>
+              <div class="pill">背诵篇目 <b>${data.recite.length}</b></div>
+            </div>
+            <div class="card-grid">
+          `;
+
+          // 按每10课分组
+          const groupSize = 10;
+          const groupCount = Math.ceil(data.lessons.length / groupSize);
+
+          for (let g = 0; g < groupCount; g++) {
+            const start = g * groupSize;
+            const end = Math.min(start + groupSize, data.lessons.length);
+            const groupLessons = data.lessons.slice(start, end);
+            const unitName = `第 ${start + 1}-${end} 课`;
+
+            let rCount = 0, wCount = 0;
+            groupLessons.forEach(l => {
+              rCount += l.recognize.length;
+              wCount += l.write.length;
+            });
+
+            html += `
+              <button type="button" class="lesson-card clickable" data-action="unit" data-grade="${grade}" data-unit="${unitName}">
+                <h3>${unitName}</h3>
+                <div class="unit-stats">
+                  <span>📖 ${groupLessons.length} 篇课文</span>
+                  <span>👁️ ${rCount} 会认字</span>
+                  <span>✍️ ${wCount} 会写字</span>
+                </div>
+              </button>
+            `;
+          }
+
+          // 背诵篇目作为特殊单元
+          if (data.recite.length > 0) {
+            html += `
+              <button type="button" class="lesson-card clickable" data-action="unit" data-grade="${grade}" data-unit="背诵篇目">
+                <h3>背诵篇目</h3>
+                <div class="unit-stats">
+                  <span>📝 ${data.recite.length} 篇</span>
+                </div>
+              </button>
+            `;
+          }
+
+          // 日积月累
+          if (data.日积月累 && data.日积月累.length > 0) {
+            html += `
+              <button type="button" class="lesson-card clickable" data-action="unit" data-grade="${grade}" data-unit="日积月累">
+                <h3>日积月累</h3>
+                <div class="unit-stats">
+                  <span>📝 ${data.日积月累.length} 条</span>
+                </div>
+              </button>
+            `;
+          }
+
+          html += `</div>`;
+        }
+
+        content.innerHTML = html;
+        attachClickHandlers();
+      }
+
+      // ========== 渲染：课文列表页 ==========
+      function renderLessonList(grade, unitName) {
+        const gradeData = getGradeData(grade);
+        let html = renderBreadcrumb({ grade, unit: unitName });
+
+        if (gradeData.type === "g2") {
+          // 二年级：找到对应单元
+          const unit = gradeData.units.find(u => u.unit === unitName);
+          if (!unit) {
+            content.innerHTML = html + `<p style="color:#b5aea0;">未找到单元：${unitName}</p>`;
+            return;
+          }
+
+          html += `<div class="card-grid">`;
+
+          unit.lessons.forEach(l => {
+            const rCount = (l.recognize || []).length;
+            const wCount = (l.write || []).length;
+
+            html += `
+              <button type="button" class="lesson-card clickable" data-action="lesson" data-grade="${grade}" data-unit="${unitName}" data-lesson="${l.title}">
+                <h3>《${l.title}》</h3>
+                <div class="unit-stats">
+                  <span>👁️ ${rCount} 会认词</span>
+                  <span>✍️ ${wCount} 会写词</span>
+                </div>
+              </button>
+            `;
+          });
+
+          html += `</div>`;
+
+          // 背诵篇目
+          if (unit.recite && unit.recite.length) {
+            html += `<div class="recite-section"><h2>背诵篇目</h2><div class="jjy-list">`;
+            unit.recite.forEach((r) => { html += `<div>${r}</div>`; });
+            html += `</div></div>`;
+          }
+
+        } else {
+          // 一年级
+          const data = gradeData.data;
+
+          if (unitName === "背诵篇目") {
+            html += `<div class="recite-section"><h2>背诵篇目</h2>`;
+            data.recite.forEach((r) => {
+              html += `
+                <div class="recite-card">
+                  <span class="rt-title">《${r.title}》</span>${r.author ? `<span class="rt-author">${r.author}</span>` : ""}
+                  <div class="rt-text">${r.text}</div>
+                </div>
+              `;
+            });
+            html += `</div>`;
+            content.innerHTML = html;
+            attachClickHandlers();
+            return;
+          }
+
+          if (unitName === "日积月累") {
+            html += `<div class="recite-section"><h2>日积月累</h2><div class="jjy-list">`;
+            data.日积月累.forEach((s) => {
+              html += `<div>${s}</div>`;
+            });
+            html += `</div></div>`;
+            content.innerHTML = html;
+            attachClickHandlers();
+            return;
+          }
+
+          // 解析课文范围（如"第 1-10 课"）
+          const match = unitName.match(/第 (\d+)-(\d+) 课/);
+          if (!match) {
+            content.innerHTML = html + `<p style="color:#b5aea0;">未找到单元：${unitName}</p>`;
+            return;
+          }
+
+          const start = parseInt(match[1]) - 1;
+          const end = parseInt(match[2]);
+          const lessons = data.lessons.slice(start, end);
+
+          html += `<div class="card-grid">`;
+
+          lessons.forEach((l, idx) => {
+            const rCount = l.recognize.length;
+            const wCount = l.write.length;
+            const lessonNum = start + idx + 1;
+
+            html += `
+              <button type="button" class="lesson-card clickable" data-action="lesson" data-grade="${grade}" data-unit="${unitName}" data-lesson="${l.lesson}">
+                <h3><span class="idx">${lessonNum}</span>《${l.lesson}》</h3>
+                <div class="unit-stats">
+                  <span>👁️ ${rCount} 会认字</span>
+                  <span>✍️ ${wCount} 会写字</span>
+                </div>
+              </button>
+            `;
+          });
+
+          html += `</div>`;
+        }
+
+        content.innerHTML = html;
+        attachClickHandlers();
+      }
+
+      // ========== 渲染：字词详情页 ==========
+      function renderLessonDetail(grade, unitName, lessonTitle) {
+        const gradeData = getGradeData(grade);
+        let html = renderBreadcrumb({ grade, unit: unitName, lesson: lessonTitle });
+
+        if (gradeData.type === "g2") {
+          // 二年级
+          const unit = gradeData.units.find(u => u.unit === unitName);
+          if (!unit) {
+            content.innerHTML = html + `<p>未找到单元：${unitName}</p>`;
+            return;
+          }
+
+          const lesson = unit.lessons.find(l => l.title === lessonTitle);
+          if (!lesson) {
+            content.innerHTML = html + `<p>未找到课文：${lessonTitle}</p>`;
+            return;
+          }
+
+          const rChips = (lesson.recognize || []).map((w) => `<div class="ch wd">${w}</div>`).join("") || `<div class="ch empty">—</div>`;
+          const wChips = (lesson.write || []).map((w) => `<div class="ch wd write">${w}</div>`).join("") || `<div class="ch empty">无</div>`;
+          const gameUrl = buildGameUrl(grade, unitName, lesson.title);
 
           html += `
             <div class="lesson-card">
-              <h3><span class="idx">${i + 1}</span>《${l.lesson}》</h3>
+              <h3>《${lesson.title}》</h3>
               <div class="char-row">
-                <div class="label">会认字（${l.recognize.length}）</div>
+                <div class="label">会认词（${(lesson.recognize || []).length}）</div>
+                <div class="char-grid">${rChips}</div>
+              </div>
+              <div class="char-row">
+                <div class="label">会写词（${(lesson.write || []).length}）</div>
+                <div class="char-grid">${wChips}</div>
+              </div>
+              <div class="lesson-actions">
+                <a class="lesson-start" href="${gameUrl}">进入本课练习 →</a>
+                <small>会自动选好本单元和《${lesson.title}》</small>
+              </div>
+            </div>
+          `;
+
+        } else {
+          // 一年级
+          const data = gradeData.data;
+          const lesson = data.lessons.find(l => l.lesson === lessonTitle);
+
+          if (!lesson) {
+            content.innerHTML = html + `<p>未找到课文：${lessonTitle}</p>`;
+            return;
+          }
+
+          const lessonIdx = data.lessons.indexOf(lesson);
+          const writeSet = new Set(lesson.write);
+
+          const recognizeChips = lesson.recognize.length
+            ? lesson.recognize.map((c) => `<div class="ch ${writeSet.has(c) ? "write" : ""}">${c}</div>`).join("")
+            : `<div class="ch empty">—</div>`;
+          const writeChips = lesson.write.length
+            ? lesson.write.map((c) => `<div class="ch write">${c}</div>`).join("")
+            : `<div class="ch empty">无</div>`;
+          const gameUrl = buildGameUrl(grade, unitName, lesson.lesson);
+
+          html += `
+            <div class="lesson-card">
+              <h3><span class="idx">${lessonIdx + 1}</span>《${lesson.lesson}》</h3>
+              <div class="char-row">
+                <div class="label">会认字（${lesson.recognize.length}）</div>
                 <div class="char-grid">${recognizeChips}</div>
               </div>
               <div class="char-row">
-                <div class="label">会写字（${l.write.length}）</div>
+                <div class="label">会写字（${lesson.write.length}）</div>
                 <div class="char-grid">${writeChips}</div>
+              </div>
+              <div class="lesson-actions">
+                <a class="lesson-start" href="${gameUrl}">进入本课练习 →</a>
+                <small>若课名与练习词库一致，会自动选中本课</small>
               </div>
             </div>
           `;
-        });
-
-        // 背诵篇目
-        html += `<div class="recite-section"><h2>背诵篇目</h2>`;
-        data.recite.forEach((r) => {
-          html += `
-            <div class="recite-card">
-              <span class="rt-title">《${r.title}》</span>${r.author ? `<span class="rt-author">${r.author}</span>` : ""}
-              <div class="rt-text">${r.text}</div>
-            </div>
-          `;
-        });
-        html += `</div>`;
-
-        // 日积月累
-        if (data.日积月累 && data.日积月累.length) {
-          html += `<div class="recite-section"><h2>日积月累</h2><div class="jjy-list">`;
-          data.日积月累.forEach((s) => {
-            html += `<div>${s}</div>`;
-          });
-          html += `</div></div>`;
         }
 
         content.innerHTML = html;
       }
 
+      // ========== 路由处理 ==========
+      function route() {
+        const r = parseHash();
+
+        // 更新 tab 状态
+        tabs.forEach((t) => t.classList.toggle("active", t.dataset.vol === r.grade));
+
+        if (!r.unit) {
+          // 单元列表页
+          renderUnitList(r.grade);
+        } else if (r.lesson) {
+          // 字词详情页
+          renderLessonDetail(r.grade, r.unit, r.lesson);
+        } else {
+          // 课文列表页
+          renderLessonList(r.grade, r.unit);
+        }
+
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+
+      // ========== 点击事件处理 ==========
+      function attachClickHandlers() {
+        // 单元卡片点击
+        document.querySelectorAll('[data-action="unit"]').forEach(el => {
+          el.addEventListener('click', () => {
+            const grade = el.dataset.grade;
+            const unit = el.dataset.unit;
+            setHash({ grade, unit });
+          });
+        });
+
+        // 课文卡片点击
+        document.querySelectorAll('[data-action="lesson"]').forEach(el => {
+          el.addEventListener('click', () => {
+            const grade = el.dataset.grade;
+            const unit = el.dataset.unit;
+            const lesson = el.dataset.lesson;
+            setHash({ grade, unit, lesson });
+          });
+        });
+      }
+
+      // ========== 事件监听 ==========
       tabs.forEach((tab) => {
         tab.addEventListener("click", () => {
-          vol = tab.dataset.vol;
-          tabs.forEach((t) => t.classList.toggle("active", t === tab));
-          renderVol(vol);
-          window.scrollTo({ top: 0, behavior: "smooth" });
+          setHash({ grade: tab.dataset.vol });
         });
       });
 
-      renderVol(vol);
+      window.addEventListener("hashchange", route);
+
+      // ========== 初始化 ==========
+      if (!window.location.hash) {
+        setHash({ grade: "上册" });
+      } else {
+        route();
+      }
     </script>
   </body>
 </html>
