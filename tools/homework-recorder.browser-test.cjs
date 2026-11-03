@@ -25,6 +25,19 @@ async function main() {
     const context = await browser.newContext({ viewport: { width: 820, height: 1180 }, deviceScaleFactor: 1, acceptDownloads: true });
     await context.addInitScript(() => {
       window.__shares = [];
+      window.__shortcutLaunches = [];
+      window.__clipboardText = "";
+      window.__rejectClipboard = false;
+      Object.defineProperty(navigator, "platform", { configurable: true, get: () => "MacIntel" });
+      Object.defineProperty(navigator, "maxTouchPoints", { configurable: true, get: () => 5 });
+      Object.defineProperty(navigator, "clipboard", { value: {
+        write(items) {
+          window.__clipboardGesture = navigator.userActivation.isActive;
+          if (window.__rejectClipboard) return Promise.reject(new DOMException("denied", "NotAllowedError"));
+          return items[0].getType("text/plain").then((blob) => blob.text()).then((text) => { window.__clipboardText = text; });
+        }
+      } });
+      window.open = (url, target) => { window.__shortcutLaunches.push({ url, target }); return window; };
       Object.defineProperty(navigator, "canShare", { value: ({ files }) => Boolean(files?.length) });
       Object.defineProperty(navigator, "share", { value: async ({ files }) => { window.__shares.push({ name: files[0].name, type: files[0].type, size: files[0].size }); } });
       const original = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
@@ -95,6 +108,35 @@ async function main() {
     if (download.suggestedFilename().endsWith(".m4a")) assert.equal(bytes.toString("ascii", 4, 8), "ftyp");
     else if (download.suggestedFilename().endsWith(".webm")) assert.equal(bytes.subarray(0, 4).toString("hex"), "1a45dfa3");
     if (qaDir) await download.saveAs(path.join(qaDir, "合成声音验收" + path.extname(download.suggestedFilename())));
+    assert.equal(await page.locator(".homework-take .homework-wechat").count(), 1, "iPad M4A 录音应提供快捷指令入口");
+    await page.locator(".homework-take .homework-wechat").click();
+    await page.waitForFunction(() => window.__shortcutLaunches.length === 1);
+    const handoff = await page.evaluate(() => ({
+      text: window.__clipboardText,
+      gesture: window.__clipboardGesture,
+      launch: window.__shortcutLaunches[0]
+    }));
+    assert.deepEqual(Buffer.from(handoff.text, "base64"), bytes, "剪贴板解码后必须与原音频逐字节相等");
+    assert.equal(handoff.gesture, true, "剪贴板权限必须在点击手势内请求");
+    const shortcut = new URL(handoff.launch.url);
+    assert.equal(shortcut.protocol, "shortcuts:");
+    assert.equal(shortcut.hostname, "run-shortcut");
+    assert.equal(shortcut.searchParams.get("name"), "语文作业");
+    assert.equal(shortcut.searchParams.get("input"), "clipboard");
+    assert.equal([...shortcut.searchParams].length, 2, "音频内容不能放进 URL");
+    assert.equal(handoff.launch.target, "_self");
+    assert.equal(await page.locator("#homeworkShortcutLaunch").isVisible(), true, "自动跳转被系统拦截时需保留手动入口");
+    await page.evaluate(() => { window.__rejectClipboard = true; });
+    await page.locator(".homework-take .homework-wechat").click();
+    await page.waitForFunction(() => document.getElementById("homeworkMessage").dataset.error === "true");
+    assert.equal(await page.evaluate(() => window.__shortcutLaunches.length), 1, "写入失败时不得启动快捷指令并传入旧剪贴板");
+    assert.equal(await page.locator("#homeworkShortcutLaunch").isVisible(), false);
+    assert.equal(await page.locator(".homework-take").count(), 1, "交接失败不能丢失录音");
+    await page.evaluate(() => { window.__rejectClipboard = false; });
+    await page.locator(".homework-take .homework-wechat").click();
+    await page.waitForFunction(() => window.__shortcutLaunches.length === 2);
+    await page.locator("#homeworkOpenShortcut").click();
+    assert.equal(await page.evaluate(() => window.__shortcutLaunches.length), 3, "备用打开按钮应可再次启动同名快捷指令");
     await page.getByRole("button", { name: "分享 / 存到文件", exact: true }).click();
     const shared = await page.evaluate(() => window.__shares[0]);
     assert.equal(shared.name, download.suggestedFilename());
@@ -175,7 +217,7 @@ async function main() {
     assert.match(await page.locator("#homeworkMessage").textContent(), /现在下载/);
     assert.equal(await page.locator(".homework-download").count(), 3);
     assert.deepEqual(errors, [], "页面不应出现运行异常");
-    console.log("通过：单元页紧凑入口、独立录音视图、返回/浏览器前后退、录制播放下载、刷新恢复、多份保留、离开视图结束录音、授权/存储失败、档案不变及3种屏宽布局。");
+    console.log("通过：单元页/独立视图、录制播放下载、快捷指令名称与 URL、手势内写入、音频逐字节还原、剪贴板失败保护、备用打开、刷新恢复、授权/存储失败、档案不变及3种屏宽布局。");
     await context.close();
   } finally {
     if (browser) await browser.close();

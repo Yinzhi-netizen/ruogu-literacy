@@ -20,6 +20,73 @@
   let route = { grade: "二上" };
   let autoTitle = "";
   let database;
+  let shortcutTransferBusy = false;
+  const shortcutUrl = "shortcuts://run-shortcut?" + new URLSearchParams({ name: "语文作业", input: "clipboard" }).toString();
+  const shortcutLaunch = el("homeworkShortcutLaunch");
+
+  function canUseShortcut(take) {
+    const appleMobile = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      (/Mac/.test(navigator.platform || "") && navigator.maxTouchPoints > 1);
+    return Boolean(appleMobile && extension(take.blob.type) === "m4a" &&
+      navigator.clipboard && navigator.clipboard.write && window.ClipboardItem);
+  }
+
+  function updateShortcutButtons() {
+    startButton.disabled = shortcutTransferBusy || busy() || !supported();
+    list.querySelectorAll(".homework-wechat").forEach((button) => {
+      button.disabled = shortcutTransferBusy || busy();
+    });
+  }
+
+  function openShortcut() {
+    // 链接只携带快捷指令名称；音频内容不放进 URL、浏览记录或服务器。
+    window.open(shortcutUrl, "_self");
+  }
+
+  function base64Audio(blob) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(reader.error || new Error("无法读取录音"));
+      reader.onload = () => {
+        const result = String(reader.result || "");
+        const comma = result.indexOf(",");
+        if (comma < 0 || !result.slice(comma + 1)) { reject(new Error("录音内容为空")); return; }
+        resolve(result.slice(comma + 1));
+      };
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  function sendToWechat(take) {
+    if (shortcutTransferBusy || busy()) return;
+    shortcutTransferBusy = true;
+    updateShortcutButtons();
+    shortcutLaunch.hidden = true;
+    notice("正在准备这份录音，请稍等…");
+    let writing;
+    try {
+      // Safari 要求在点击事件中立即请求写入权限；异步读取放在 ClipboardItem 的 Promise 内。
+      const text = base64Audio(take.blob).then((base64) => new Blob([base64], { type: "text/plain" }));
+      writing = navigator.clipboard.write([new ClipboardItem({ "text/plain": text })]);
+    } catch (_) {
+      shortcutTransferBusy = false;
+      updateShortcutButtons();
+      notice("暂时无法把录音交给快捷指令，请使用下载或其他分享。原录音仍保留着。", true);
+      return;
+    }
+    writing.then(() => {
+      // 部分 iPad 会要求再次轻点才能打开其他 App，始终保留一个可手动点击的入口。
+      shortcutLaunch.hidden = false;
+      notice(`《${take.title}》已准备好。正在打开“语文作业”，请在微信里选择老师并确认发送；若未跳转，点下方“打开语文作业”。`);
+      try { openShortcut(); }
+      catch (_) { notice("录音已准备好，请点下方“打开语文作业”继续。"); }
+    }).catch(() => {
+      notice("没有取得剪贴板写入权限，请再点一次“发送到微信”并允许操作。也可以下载后发送。原录音仍在。", true);
+    }).finally(() => {
+      shortcutTransferBusy = false;
+      updateShortcutButtons();
+    });
+  }
 
   function notice(text, error = false) {
     message.textContent = text;
@@ -54,6 +121,7 @@
       saving: "正在整理录音，请稍等…"
     }[phase];
     root.hidden = !isHomeworkView();
+    updateShortcutButtons();
   }
 
   function clock(seconds) {
@@ -155,6 +223,13 @@
       });
       card.append(audio);
       const actions = element("div", "homework-take-actions");
+      if (canUseShortcut(take)) {
+        const wechat = element("button", "homework-button homework-wechat", "发送到微信");
+        wechat.type = "button";
+        wechat.disabled = shortcutTransferBusy || busy();
+        wechat.addEventListener("click", () => sendToWechat(take));
+        actions.append(wechat);
+      }
       const download = element("a", "homework-button homework-download", "↓ 下载音频");
       download.href = url;
       download.download = take.filename;
@@ -263,7 +338,8 @@
   }
 
   async function start() {
-    if (busy() || !supported()) return;
+    if (busy() || shortcutTransferBusy || !supported()) return;
+    shortcutLaunch.hidden = true;
     const id = ++requestId;
     list.querySelectorAll("audio").forEach((audio) => audio.pause());
     setPhase("requesting");
@@ -322,6 +398,10 @@
 
   startButton.addEventListener("click", start);
   stopButton.addEventListener("click", () => stop());
+  el("homeworkOpenShortcut").addEventListener("click", () => {
+    try { openShortcut(); }
+    catch (_) { notice("请确认 iPad 上存在名为“语文作业”的快捷指令，再点一次打开。"); }
+  });
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) stop("刚才离开了页面，已自动结束这次录音。");
   });

@@ -460,11 +460,25 @@
           </div>
         </div>
         <p id="homeworkMessage" class="homework-message" role="status" aria-live="polite">正在读取本机录音…</p>
+        <div id="homeworkShortcutLaunch" class="homework-shortcut-launch" hidden>
+          <p>录音已经准备好。若没有自动跳转，点这里继续：</p>
+          <button type="button" id="homeworkOpenShortcut" class="homework-button homework-wechat">打开语文作业 →</button>
+        </div>
         <div class="homework-recordings-heading"><h3>我的录音</h3><span>只保存在这台设备</span></div>
         <div id="homeworkRecordings" class="homework-recordings"></div>
         <details class="homework-help">
+          <summary>首次连接“语文作业”快捷指令</summary>
+          <p>iPad 上的快捷指令名称须为「语文作业」。将测试版的「选择文件」改为以下动作，保留最后已验证可用的微信打开动作：</p>
+          <ol>
+            <li>添加「Base64 编码」，把「编码」切换成「解码」，输入设为「快捷指令输入」。</li>
+            <li>添加「设定名称」，将解码结果命名为「语文作业.m4a」。</li>
+            <li>让原来的微信打开动作接收上一步改好名称的文件。</li>
+          </ol>
+          <p>以后点每份录音下的「发送到微信」。页面会临时使用系统剪贴板传递音频，无需手动选文件；若 iPad 提示打开快捷指令或允许粘贴，请选择允许。最后在微信里选老师并确认发送。</p>
+        </details>
+        <details class="homework-help">
           <summary>iPad 上怎么发给老师？</summary>
-          <p>录好后先点播放试听。点「下载音频」保存文件，再在微信聊天里选择文件发送；也可以点「分享 / 存到文件」，在 iPad 分享菜单里选微信（若有）或「存储到“文件”」。</p>
+          <p>录好后先点播放试听。配置好「语文作业」快捷指令后，可点「发送到微信」直接交给快捷指令处理。也可以点「下载音频」保存文件，或点「分享 / 存到文件」使用系统分享菜单。</p>
           <p>第一次使用，请在麦克风提示里选「允许」。建议用 Safari 打开此页面。iPad 优先生成 M4A 音频，文件名会带上日期和作业名称。</p>
           <p>录音保存在当前浏览器中，请及时下载留一份；清除网站数据会删除本机录音。</p>
         </details>
