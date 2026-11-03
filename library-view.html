@@ -10,6 +10,7 @@
     <meta name="apple-mobile-web-app-title" content="星河书旅·识字库" />
     <title>若谷识字库 · 星河书旅</title>
     <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./homework-recorder.css" />
     <style>
       :root {
         --primary: #7a8b5e;
@@ -421,12 +422,61 @@
         <button class="vol-tab" data-vol="二上">二年级上册</button>
       </div>
 
+      <a class="homework-entry" id="homeworkEntry" href="#grade=二上&amp;view=homework" hidden>
+        <span class="homework-entry-icon" aria-hidden="true">●</span>
+        <span>语文作业 · 录音小站</span>
+        <span class="homework-entry-arrow" aria-hidden="true">→</span>
+      </a>
+
+      <section class="homework-panel" id="homeworkRecorder" aria-labelledby="homeworkHeading" hidden>
+        <a class="homework-return" href="#grade=二上">← 返回单元复习</a>
+        <div class="homework-heading">
+          <div>
+            <p class="homework-eyebrow">把今天的朗读，认真留下来</p>
+            <h2 id="homeworkHeading">语文作业 <span>录音小站</span></h2>
+          </div>
+          <span class="homework-badge">录好 · 听听 · 交作业</span>
+        </div>
+        <div class="homework-workspace">
+          <div class="homework-setup">
+            <label for="homeworkTitle">今天读什么？</label>
+            <input id="homeworkTitle" type="text" maxlength="60" placeholder="例如：葡萄沟 + 词语2遍" autocomplete="off" />
+            <p>可以写课文名；不填也能开始录音。</p>
+            <ol class="homework-steps" aria-label="录音步骤">
+              <li><span>1</span>点开始，允许使用麦克风</li>
+              <li><span>2</span>读完点停止，再试听一遍</li>
+              <li><span>3</span>下载音频，用微信发给老师</li>
+            </ol>
+          </div>
+          <div class="homework-console" data-recording-state="idle">
+            <div class="homework-indicator" aria-hidden="true"><span></span><i></i><i></i><i></i><i></i><i></i></div>
+            <output id="homeworkTimer" class="homework-timer" aria-label="已录时长">00:00</output>
+            <p id="homeworkState" class="homework-state" role="status">准备好，就开始吧</p>
+            <div class="homework-controls">
+              <button type="button" id="homeworkStart" class="homework-button homework-record" disabled><span aria-hidden="true">●</span> 开始录音</button>
+              <button type="button" id="homeworkStop" class="homework-button homework-stop" disabled>■ 停止录音</button>
+            </div>
+            <p class="homework-keep-open">录音时请留在本页，保持 iPad 屏幕亮着。</p>
+          </div>
+        </div>
+        <p id="homeworkMessage" class="homework-message" role="status" aria-live="polite">正在读取本机录音…</p>
+        <div class="homework-recordings-heading"><h3>我的录音</h3><span>只保存在这台设备</span></div>
+        <div id="homeworkRecordings" class="homework-recordings"></div>
+        <details class="homework-help">
+          <summary>iPad 上怎么发给老师？</summary>
+          <p>录好后先点播放试听。点「下载音频」保存文件，再在微信聊天里选择文件发送；也可以点「分享 / 存到文件」，在 iPad 分享菜单里选微信（若有）或「存储到“文件”」。</p>
+          <p>第一次使用，请在麦克风提示里选「允许」。建议用 Safari 打开此页面。iPad 优先生成 M4A 音频，文件名会带上日期和作业名称。</p>
+          <p>录音保存在当前浏览器中，请及时下载留一份；清除网站数据会删除本机录音。</p>
+        </details>
+      </section>
+
       <div id="content"></div>
     </main>
 
     <script src="./grade1-library.js"></script>
     <script src="./grade1-words.js"></script>
     <script src="./grade2-words.js"></script>
+    <script src="./homework-recorder.js"></script>
     <script>
       const content = document.querySelector("#content");
       const tabs = document.querySelectorAll(".vol-tab");
@@ -446,6 +496,7 @@
         const params = new URLSearchParams(hash);
         return {
           grade: params.get("grade") || "上册",
+          view: params.get("view"),
           unit: params.get("unit"),
           lesson: params.get("lesson")
         };
@@ -454,6 +505,7 @@
       function setHash(params) {
         const search = new URLSearchParams();
         if (params.grade) search.set("grade", params.grade);
+        if (params.view) search.set("view", params.view);
         if (params.unit) search.set("unit", params.unit);
         if (params.lesson) search.set("lesson", params.lesson);
         window.location.hash = search.toString();
@@ -837,11 +889,28 @@
       // ========== 路由处理 ==========
       function route() {
         const r = parseHash();
+        const homework = r.grade === "二上" && r.view === "homework";
+        const homeworkEntry = document.querySelector("#homeworkEntry");
+        const gradeTabs = document.querySelector(".vol-tabs");
+        if (homeworkEntry) {
+          homeworkEntry.hidden = r.grade !== "二上" || homework;
+          const destination = new URLSearchParams({ grade: "二上", view: "homework" });
+          if (r.unit) destination.set("unit", r.unit);
+          if (r.lesson) destination.set("lesson", r.lesson);
+          homeworkEntry.href = "#" + destination.toString();
+        }
+        if (gradeTabs) gradeTabs.hidden = homework;
+        content.hidden = homework;
+        if (window.RUOGU_HOMEWORK) window.RUOGU_HOMEWORK.setContext(r);
 
         // 更新 tab 状态
         tabs.forEach((t) => t.classList.toggle("active", t.dataset.vol === r.grade));
 
-        if (!r.unit) {
+        if (homework) {
+          // 独立录音视图，不把录音内容插入单元复习列表。
+          window.scrollTo({ top: 0, behavior: "smooth" });
+          return;
+        } else if (!r.unit) {
           // 单元列表页
           renderUnitList(r.grade);
         } else if (r.lesson) {
