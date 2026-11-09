@@ -9,6 +9,7 @@
   const MIN_BRUSH = 4;
   const MAX_BRUSH = 28;
   const DEFAULT_BRUSH = 12;
+  const REQUEST_TIMEOUT = 25000;
 
   function hasApiKey() {
     return Boolean(localStorage.getItem(OCR_KEY_STORE));
@@ -126,6 +127,15 @@
     let brush = loadBrush();
     let activeId = null;      // 正在画的 pointerId
     let activeType = null;    // "pen" / "touch" / "mouse"
+    let submitting = false;
+    let completed = false;
+    const onSuccess = handlers.onSuccess;
+    handlers = { ...handlers, onSuccess(...args) {
+      if (completed) return;
+      completed = true;
+      stage.querySelector("[data-action='submitOcr']").disabled = true;
+      onSuccess(...args);
+    } };
 
     function setStrokeStyle(width) {
       ctx.lineWidth = width;
@@ -198,6 +208,7 @@
     }
 
     function beginStroke(p) {
+      if (submitting || completed) return;
       current = { cell: cellOf(p.x), width: brush, points: [p] };
       strokes.push(current);
     }
@@ -348,33 +359,74 @@
     });
 
     // 提交识别
-    stage.querySelector("[data-action='submitOcr']").addEventListener("click", async () => {
+    const submitBtn = stage.querySelector("[data-action='submitOcr']");
+    submitBtn.addEventListener("click", async () => {
+      if (submitting || completed) return;
+      if (!strokes.length) {
+        ocrStatus.hidden = false;
+        ocrStatus.className = "ocr-status ocr-warn";
+        ocrStatus.textContent = "先在方框里写好，再点提交识别。";
+        return;
+      }
+      endStroke();
+      submitting = true;
+      const controls = Array.from(stage.querySelectorAll("button, input"));
+      const wasDisabled = controls.map((el) => el.disabled);
+      controls.forEach((el) => { el.disabled = true; });
       ocrStatus.hidden = false;
       ocrStatus.className = "ocr-status";
-      ocrStatus.innerHTML = "<span class='ocr-spinner'></span> 正在识别你写的字...";
+      ocrStatus.setAttribute("aria-busy", "true");
+      ocrStatus.innerHTML = "<span class='ocr-spinner'></span> 正在识别你写的字，请稍等…";
       feedback.textContent = "";
 
-      const imageBlob = await captureCanvas(canvas);
-      const result = await recognizeCharacter(imageBlob);
-
-      if (result.error === "no_key") {
-        // 无 Key：走离线自评兜底
-        offerManualPass(stage, word, canvas, handlers, "还没设置识别用的 API Key。");
-        return;
+      try {
+        const imageBlob = await captureCanvas(canvas);
+        const result = await recognizeCharacter(imageBlob);
+        // 切换了关卡或题目以后，旧请求不能改新题、记错题或加星。
+        if (!canvas.isConnected || stage.querySelector(".handwrite-pad") !== canvas) return;
+        if (result.error === "no_key") {
+          offerManualPass(stage, word, canvas, handlers, "还没设置识别用的 API Key。");
+        } else if (result.error) {
+          showServiceProblem(result);
+        } else {
+          completed = handleRecognitionResult(stage, result.text, word, canvas, handlers) === true;
+        }
+      } catch (err) {
+        if (canvas.isConnected && stage.querySelector(".handwrite-pad") === canvas) {
+          showServiceProblem({ error: "image_error" });
+        }
+      } finally {
+        submitting = false;
+        ocrStatus.removeAttribute("aria-busy");
+        controls.forEach((el, i) => { el.disabled = wasDisabled[i]; });
+        submitBtn.disabled = completed;
       }
-      if (result.error === "network_error") {
-        // 断网：走离线自评兜底
-        offerManualPass(stage, word, canvas, handlers, "现在没有网络，识别不了。");
-        return;
-      }
-      if (result.error === "recognition_failed") {
-        ocrStatus.className = "ocr-status ocr-warn";
-        ocrStatus.innerHTML = `识别失败：${result.apiMessage || "未知错误"}。请重试或擦掉重新写。`;
-        return;
-      }
-
-      handleRecognitionResult(stage, result.text, word, canvas, handlers);
     });
+
+    function showServiceProblem(result) {
+      const reasons = {
+        network_error: "暂时连不上识别服务。",
+        timeout: "识别服务这次等得有点久。",
+        quota_exceeded: "识别服务暂时达到使用上限。",
+        auth_error: "识别服务的设置需要家长检查一下。",
+        image_error: "这次没能准备好识别图片。"
+      };
+      ocrStatus.className = "ocr-status ocr-warn";
+      ocrStatus.innerHTML = `
+        <div class="fallback-check">
+          <p></p>
+          <p class="hit-hint">你写的字还在，不用擦掉。这次没有算错，也没有扣星。</p>
+          <div class="actions two-actions">
+            <button class="soft-button" data-action="retryService">再试识别</button>
+            <button class="soft-button" data-action="selfCheck">自己对一对</button>
+          </div>
+        </div>`;
+      ocrStatus.querySelector("p").textContent = reasons[result.error] || "识别服务暂时没能完成。";
+      stage.querySelector("[data-action='retryService']").addEventListener("click", () => submitBtn.click());
+      stage.querySelector("[data-action='selfCheck']").addEventListener("click", () => {
+        offerManualPass(stage, word, canvas, handlers, "识别服务暂时不可用。");
+      });
+    }
 
     setTimeout(playPrompt, 260);
   }
@@ -397,15 +449,14 @@
         const sctx = target.getContext("2d");
         sctx.drawImage(fullCanvas, 0, 0, target.width, target.height);
       }
-      target.toBlob(function (blob) {
-        resolve(blob);
-      }, "image/png");
+      target.toBlob(resolve, "image/png");
     });
   }
 
   async function recognizeCharacter(blob) {
     const apiKey = localStorage.getItem(OCR_KEY_STORE);
     if (!apiKey) return { error: "no_key" };
+    if (!blob) return { error: "image_error" };
 
     const formData = new FormData();
     formData.append("file", blob, "handwrite.png");
@@ -414,27 +465,56 @@
     formData.append("OCREngine", "3");
     formData.append("isOverlayRequired", "false");
 
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
     try {
       const res = await fetch("https://api.ocr.space/parse/image", {
         method: "POST",
-        body: formData
+        body: formData,
+        signal: controller.signal
       });
       const raw = await res.text();
       let data;
       try {
         data = JSON.parse(raw);
       } catch (e) {
-        return { error: "recognition_failed", apiMessage: "Non-JSON response: " + raw.slice(0, 200) };
+        return serviceError(res.status);
       }
-      if ((data.OCRExitCode === 1 || data.OCRExitCode === 2) && data.ParsedResults && data.ParsedResults.length) {
-        const text = data.ParsedResults[0].ParsedText ? data.ParsedResults[0].ParsedText.trim() : "";
+      const pages = Array.isArray(data && data.ParsedResults) ? data.ParsedResults : [];
+      const code = Number(data && data.OCRExitCode);
+      if (res.ok && (code === 1 || code === 2) && pages.length) {
+        const parsed = pages.filter((page) => page && typeof page.ParsedText === "string" &&
+          (page.FileParseExitCode == null || Number(page.FileParseExitCode) === 1));
+        if (!parsed.length) return serviceError(res.status, apiErrorMessage(data));
+        const text = parsed.map((page) => page.ParsedText.trim()).join("\n");
         return { success: true, text };
       }
-      const errMsg = data.ErrorMessage || data.ErrorDetails || "API returned exit code " + (data.OCRExitCode || "unknown");
-      return { error: "recognition_failed", apiMessage: errMsg };
+      return serviceError(res.status, apiErrorMessage(data));
     } catch (e) {
-      return { error: "network_error", apiMessage: e.message };
+      return { error: controller.signal.aborted ? "timeout" : "network_error" };
+    } finally {
+      clearTimeout(timeout);
     }
+  }
+
+  function apiErrorMessage(data) {
+    if (!data || typeof data !== "object") return "";
+    const values = [data.ErrorMessage, data.ErrorDetails, data.message, data.error];
+    if (Array.isArray(data.ParsedResults)) {
+      data.ParsedResults.forEach((page) => {
+        if (page) values.push(page.ErrorMessage, page.ErrorDetails);
+      });
+    }
+    return values.flat().filter((v) => typeof v === "string" && v.trim()).join("; ").slice(0, 500);
+  }
+
+  function serviceError(status, message = "") {
+    let error = "service_unavailable";
+    if (status === 401 || status === 403 || /(?:api.?key|apikey).*(?:invalid|expired|not valid)/i.test(message)) error = "auth_error";
+    else if (status === 429 || /rate.?limit|quota|limit.*exceed|too many requests/i.test(message)) error = "quota_exceeded";
+    else if (status === 408 || status === 504 || /timed?\s*out|timeout/i.test(message)) error = "timeout";
+    // 不把服务端原文插入页面：它可能是 HTML、内部信息或未经转义的用户文本。
+    return { error, httpStatus: status };
   }
 
   function handleRecognitionResult(stage, recognizedText, word, canvas, handlers) {
@@ -446,9 +526,9 @@
 
     if (exact || allChars) {
       ocrStatus.className = "ocr-status ocr-ok";
-      ocrStatus.innerHTML = `识别成功：${cleaned} ✓`;
+      ocrStatus.textContent = `识别成功：${cleaned} ✓`;
       handlers.onSuccess(word, "听写成功");
-      return;
+      return true;
     }
 
     // 测试模式：不能重写也不能看答案，这题算错直接下一题
@@ -456,7 +536,7 @@
       ocrStatus.className = "ocr-status ocr-warn";
       ocrStatus.innerHTML = `
         <div class="fallback-check">
-          <p>识别结果：<strong>${cleaned || "（空白）"}</strong></p>
+          <p>识别结果：<strong>${escapeText(cleaned || "（空白）")}</strong></p>
           <p class="hit-hint">测试里没有重写机会哦，这题算错，考完评估里会看到它。</p>
           <div class="actions single-action">
             <button class="primary-button" data-action="examFailNext">知道了，下一题 →</button>
@@ -473,7 +553,7 @@
     ocrStatus.className = "ocr-status ocr-warn";
     ocrStatus.innerHTML = `
       <div class="fallback-check">
-        <p>识别结果：<strong>${cleaned || "（空白）"}</strong>，要写的是「${target}」</p>
+        <p>识别结果：<strong>${escapeText(cleaned || "（空白）")}</strong>，要写的是「${target}」</p>
         <p class="hit-hint">${cleaned ? (hitCount > 0 ? `认出了 ${hitCount}/${target.length} 个字，写歪的那一格单独擦掉重写就好。` : "写得不太清楚，再写一次试试。") : "还没写呢，先在方框里写一下。"}</p>
         <div class="actions two-actions">
           <button class="soft-button" data-action="retryManual">全部重写</button>
@@ -483,6 +563,10 @@
     `;
     bindRetry(stage, word, canvas, handlers);
     bindPeekInline(stage, word, handlers);
+  }
+
+  function escapeText(text) {
+    return text.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
   }
 
   // 离线/无 Key 兜底：允许若谷诚实自评通过
@@ -506,7 +590,10 @@
       `;
       const passBtn = stage.querySelector("[data-action='manualPass']");
       if (passBtn) {
-        passBtn.addEventListener("click", () => handlers.onSuccess(word, "听写成功（离线自评）"));
+        passBtn.addEventListener("click", () => {
+          passBtn.disabled = true;
+          handlers.onSuccess(word, "听写成功（离线自评）");
+        }, { once: true });
       }
       stage.querySelector("[data-action='examFailNext']").addEventListener("click", () => handlers.onPickNext());
       return;
@@ -528,7 +615,10 @@
     bindPeekInline(stage, word, handlers);
     const passBtn = stage.querySelector("[data-action='manualPass']");
     if (passBtn) {
-      passBtn.addEventListener("click", () => handlers.onSuccess(word, "听写成功（离线自评）"));
+      passBtn.addEventListener("click", () => {
+        passBtn.disabled = true;
+        handlers.onSuccess(word, "听写成功（离线自评）");
+      }, { once: true });
     }
   }
 
